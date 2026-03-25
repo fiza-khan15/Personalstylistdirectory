@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
+import { supabase } from "../../lib/supabase";
 
 interface AccessProps {
   onNavigate?: (page: string) => void;
@@ -32,10 +33,37 @@ export const Access = ({ onNavigate }: AccessProps) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Access request submitted:", formData);
-    setSubmitted(true);
+    
+    try {
+      // Insert data into the database
+      const { data, error } = await supabase
+        .from("access_requests")
+        .insert([
+          {
+            type: "client",
+            name: formData.fullName,
+            email: formData.email,
+            location: formData.location,
+            client_context: formData.context,
+            seeking: formData.preferences.join(", "),
+            status: "pending"
+          },
+        ]);
+
+      if (error) {
+        console.error("Error inserting data:", error);
+        alert("There was an error submitting your request. Please try again.");
+        return;
+      }
+      
+      console.log("Data inserted successfully:", data);
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      alert("There was an error submitting your request. Please try again.");
+    }
   };
 
   if (submitted) {

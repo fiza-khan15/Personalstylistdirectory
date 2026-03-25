@@ -16,6 +16,7 @@ import { IntroductionDetail } from "@/app/components/IntroductionDetail";
 import { StylistIntroductions } from "@/app/components/StylistIntroductions";
 import { StylistIntroductionDetail } from "@/app/components/StylistIntroductionDetail";
 import { ClientProfileEditor } from "@/app/components/ClientProfileEditor";
+import { SignIn } from "@/app/components/SignIn";
 import { stylists } from "@/app/data/stylists";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -335,6 +336,22 @@ export default function App() {
               transition={{ duration: 0.8 }}
             >
               <ClientProfileEditor onNavigate={setCurrentPage} />
+            </motion.div>
+          ) : currentPage === "sign-in" ? (
+            <motion.div
+              key="sign-in"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <SignIn 
+                onNavigate={setCurrentPage}
+                onSignInSuccess={(type) => {
+                  setIsLoggedIn(true);
+                  setAccountType(type);
+                }}
+              />
             </motion.div>
           ) : (
             <LandingPage key="fallback" onNavigate={setCurrentPage} />

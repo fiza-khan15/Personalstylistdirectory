@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
+import { supabase } from "../../lib/supabase";
 
 interface StylistApplicationProps {
   onNavigate?: (page: string) => void;
@@ -8,6 +9,7 @@ interface StylistApplicationProps {
 export const StylistApplication = ({ onNavigate }: StylistApplicationProps) => {
   const [formData, setFormData] = useState({
     fullName: "",
+    email: "",
     professionalTitle: "",
     location: "",
     yearsOfPractice: "",
@@ -37,14 +39,45 @@ export const StylistApplication = ({ onNavigate }: StylistApplicationProps) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.confirmationChecked) {
       alert("Please confirm that your information is accurate.");
       return;
     }
-    console.log("Stylist application submitted:", formData);
-    setSubmitted(true);
+    
+    try {
+      // Insert data into Supabase
+      const { data, error } = await supabase
+        .from("access_requests")
+        .insert([
+          {
+            type: "stylist",
+            name: formData.fullName,
+            email: formData.email,
+            location: formData.location,
+            professional_title: formData.professionalTitle,
+            years_experience: formData.yearsOfPractice,
+            website: formData.portfolioLink,
+            areas_of_practice: formData.areasOfPractice.join(", "),
+            approach: formData.approach,
+            stylist_client_context: formData.clientContext,
+            status: "pending"
+          },
+        ]);
+
+      if (error) {
+        console.error("Error inserting data:", error);
+        alert("There was an error submitting your application. Please try again.");
+        return;
+      }
+
+      console.log("Data inserted successfully:", data);
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      alert("There was an error submitting your application. Please try again.");
+    }
   };
 
   if (submitted) {
@@ -135,6 +168,22 @@ export const StylistApplication = ({ onNavigate }: StylistApplicationProps) => {
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   className="w-full border-b border-white/10 bg-transparent py-4 text-sm tracking-[0.05em] text-white outline-none focus:border-red-900 transition-colors placeholder:text-neutral-700"
                   placeholder="Enter your name"
+                />
+              </label>
+            </div>
+
+            <div className="space-y-6">
+              <label className="block">
+                <span className="text-[10px] font-bold tracking-[0.5em] text-neutral-500 uppercase mb-6 block">
+                  Email
+                </span>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full border-b border-white/10 bg-transparent py-4 text-sm tracking-[0.05em] text-white outline-none focus:border-red-900 transition-colors placeholder:text-neutral-700"
+                  placeholder="Enter your email"
                 />
               </label>
             </div>
