@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowUpRight } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface StylistDashboardProps {
   onNavigate: (page: string) => void;
@@ -7,11 +8,49 @@ interface StylistDashboardProps {
 }
 
 export const StylistDashboard = ({ onNavigate, onLogout }: StylistDashboardProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [profileData, setProfileData] = useState<any>(null);
+  
   // Mock data - would come from backend
   const analytics = {
     profileViews: 342,
     introductions: 23,
   };
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        // Get the currently logged-in user
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.error("Auth error:", authError);
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch profile data from profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          setProfileData(null);
+        } else {
+          setProfileData(profile);
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   return (
     <div className="min-h-screen py-32 md:py-40">
@@ -23,7 +62,7 @@ export const StylistDashboard = ({ onNavigate, onLogout }: StylistDashboardProps
             Stylist Dashboard
           </h1>
           <p className="text-[10px] font-medium tracking-[0.4em] text-neutral-500 uppercase">
-            Maven Clarke
+            {profileData?.name || "Not yet provided"}
           </p>
         </div>
 
@@ -88,9 +127,11 @@ export const StylistDashboard = ({ onNavigate, onLogout }: StylistDashboardProps
                 Availability
               </p>
               <p className="font-serif text-2xl font-light text-white">
-                Accepting Clients
+                {profileData?.accepting_clients ? "Accepting Clients" : "Not Accepting Clients"}
               </p>
-              <button className="mt-4 inline-block border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.4em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white">
+              <button 
+                onClick={() => onNavigate("edit-profile")}
+                className="mt-4 inline-block border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.4em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white">
                 Update Status
               </button>
             </div>

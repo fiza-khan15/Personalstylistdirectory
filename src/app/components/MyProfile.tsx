@@ -51,12 +51,11 @@ export const MyProfile = ({ onNavigate, onLogout }: MyProfileProps) => {
 
   // Mock data - would come from backend
   const clientData = {
-    name: profileData?.name || "Eleanor Richardson",
-    city: profileData?.city || "New York",
-    memberSince: "January 2026",
-    styleInterests: ["Minimalist", "Contemporary", "Tailoring"],
-    styleDescription: profileData?.style_preferences ||
-      "I'm seeking a refined, minimal wardrobe that prioritizes quality over quantity. My aesthetic leans toward architectural silhouettes, neutral palettes, and investment pieces that transcend seasons.",
+    name: profileData?.name || "Not yet provided",
+    city: profileData?.city || "Not yet provided",
+    memberSince: profileData?.member_since || "Not yet provided",
+    styleInterests: profileData?.style_interests || [],
+    styleDescription: profileData?.style_preferences || "Not yet provided",
   };
 
   const savedStylists = [
@@ -199,16 +198,22 @@ export const MyProfile = ({ onNavigate, onLogout }: MyProfileProps) => {
                 <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
                   Style Interests
                 </p>
-                <div className="flex flex-wrap gap-3">
-                  {clientData.styleInterests.map((interest) => (
-                    <span
-                      key={interest}
-                      className="border border-white/10 px-6 py-3 text-[9px] font-medium tracking-[0.3em] text-neutral-400 uppercase"
-                    >
-                      {interest}
-                    </span>
-                  ))}
-                </div>
+                {clientData.styleInterests.length > 0 ? (
+                  <div className="flex flex-wrap gap-3">
+                    {clientData.styleInterests.map((interest) => (
+                      <span
+                        key={interest}
+                        className="border border-white/10 px-6 py-3 text-[9px] font-medium tracking-[0.3em] text-neutral-400 uppercase"
+                      >
+                        {interest}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="font-serif text-xl font-light text-neutral-500">
+                    Not yet provided
+                  </p>
+                )}
               </div>
             </motion.div>
 

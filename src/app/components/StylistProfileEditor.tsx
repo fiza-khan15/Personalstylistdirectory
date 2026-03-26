@@ -1,29 +1,86 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Upload, X } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface StylistProfileEditorProps {
   onNavigate: (page: string) => void;
 }
 
 export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [profileData, setProfileData] = useState<any>(null);
+  
   const [formData, setFormData] = useState({
-    name: "Maven Clarke",
-    city: "New York",
-    country: "United States",
-    bio: "Editorial stylist with over a decade of experience crafting timeless, sophisticated looks for discerning clientele.",
+    name: "",
+    city: "",
+    country: "",
+    bio: "",
     specialties: {
-      menswear: true,
-      editorial: true,
-      luxury: true,
+      menswear: false,
+      editorial: false,
+      luxury: false,
       branding: false,
     },
-    instagram: "@mavenclarke",
-    website: "mavenclarke.com",
-    acceptingClients: true,
+    instagram: "",
+    website: "",
+    acceptingClients: false,
   });
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [portfolioImages, setPortfolioImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        // Get the currently logged-in user
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.error("Auth error:", authError);
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch profile data from profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          setProfileData(null);
+        } else {
+          setProfileData(profile);
+          
+          // Populate form with existing data
+          setFormData({
+            name: profile?.name || "",
+            city: profile?.city || "",
+            country: profile?.country || "",
+            bio: profile?.bio || "",
+            specialties: profile?.specialties || {
+              menswear: false,
+              editorial: false,
+              luxury: false,
+              branding: false,
+            },
+            instagram: profile?.instagram || "",
+            website: profile?.website || "",
+            acceptingClients: profile?.accepting_clients || false,
+          });
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -39,10 +96,46 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
     }));
   };
 
-  const handleSave = () => {
-    // Save logic would go here
-    console.log("Saving profile:", formData);
-    onNavigate("dashboard");
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Get the currently logged-in user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.error("Auth error:", authError);
+        setIsSaving(false);
+        return;
+      }
+
+      // Update profile data in profiles table
+      const { data: updatedProfile, error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          name: formData.name,
+          city: formData.city,
+          country: formData.country,
+          bio: formData.bio,
+          specialties: formData.specialties,
+          instagram: formData.instagram,
+          website: formData.website,
+          accepting_clients: formData.acceptingClients,
+        })
+        .eq("user_id", user.id)
+        .single();
+
+      if (updateError) {
+        console.error("Profile update error:", updateError);
+      } else {
+        setProfileData(updatedProfile);
+        console.log("Saving profile:", formData);
+        onNavigate("dashboard");
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
