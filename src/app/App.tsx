@@ -25,16 +25,20 @@ const FeaturedInsight = () => {
     <section className="bg-neutral-950 py-60 border-y border-white/5">
       <div className="mx-auto max-w-7xl px-6 md:px-12 text-center">
         <motion.div
-           initial={{ opacity: 0 }}
-           whileInView={{ opacity: 1 }}
-           transition={{ duration: 1.5 }}
-           viewport={{ once: true }}
-           className="space-y-12"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 1.5 }}
+          viewport={{ once: true }}
+          className="space-y-12"
         >
-          <span className="text-[10px] font-bold tracking-[0.6em] text-red-900 uppercase">THE JOURNAL</span>
+          <span className="text-[10px] font-bold tracking-[0.6em] text-red-900 uppercase">
+            THE JOURNAL
+          </span>
           <h2 className="font-serif text-5xl md:text-8xl font-light tracking-tighter text-white leading-none">
             The Art of <br />
-            <span className="italic text-neutral-500 pl-12">Restraint</span>
+            <span className="italic text-neutral-500 pl-12">
+              Restraint
+            </span>
           </h2>
           <div className="mx-auto h-[1px] w-24 bg-red-900" />
           <p className="mx-auto max-w-xl text-xs leading-[2] tracking-[0.15em] text-neutral-500 uppercase">
@@ -49,7 +53,11 @@ const FeaturedInsight = () => {
   );
 };
 
-const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => (
+const LandingPage = ({
+  onNavigate,
+}: {
+  onNavigate: (page: string) => void;
+}) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -57,7 +65,7 @@ const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => 
     transition={{ duration: 0.8 }}
   >
     <Hero onNavigate={onNavigate} />
-    
+
     {/* Quote Section (The Manifesto) */}
     <section className="mx-auto max-w-5xl py-60 px-6 text-center">
       <motion.div
@@ -68,11 +76,14 @@ const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => 
         className="space-y-10"
       >
         <p className="font-serif text-3xl md:text-5xl italic leading-tight text-neutral-300 font-light">
-          "Style is a silent language, spoken through the curation of identity."
+          "Style is a silent language, spoken through the
+          curation of identity."
         </p>
         <div className="mx-auto h-[1px] w-12 bg-neutral-800" />
-        <p 
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        <p
+          onClick={() =>
+            window.scrollTo({ top: 0, behavior: "smooth" })
+          }
           className="text-[9px] font-bold tracking-[0.6em] text-red-900 uppercase cursor-pointer hover:opacity-70 transition-opacity"
         >
           The Atelistry Philosophy
@@ -81,17 +92,21 @@ const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => 
     </section>
 
     <About />
-    
+
     <FeaturedInsight />
-    
+
     {/* Newsletter (Subscription) */}
     <section className="bg-neutral-950 py-60 border-t border-white/5">
       <div className="mx-auto max-w-xl px-6 text-center">
         <h2 className="mb-6 font-serif text-4xl font-light tracking-tight text-white">
-          The Weekly <span className="italic text-neutral-500">Dialogue</span>
+          The Weekly{" "}
+          <span className="italic text-neutral-500">
+            Dialogue
+          </span>
         </h2>
         <p className="text-xs tracking-[0.15em] text-neutral-500 uppercase mb-12">
-          Occasional reflections on style, identity, and intention.
+          Occasional reflections on style, identity, and
+          intention.
         </p>
         <form className="flex flex-col gap-12 items-center">
           <input
@@ -113,27 +128,60 @@ const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => 
 );
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState("home");
+  // UPDATE 1: Check localStorage first before defaulting to "home"
+  const [currentPage, setCurrentPage] = useState(() => {
+    const savedPage = localStorage.getItem("atelistry_page");
+    return savedPage || "home";
+  });
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accountType, setAccountType] = useState<"client" | "stylist">("client");
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [accountType, setAccountType] = useState<
+    "client" | "stylist"
+  >("client");
+  const [isCheckingSession, setIsCheckingSession] =
+    useState(true);
 
   // Check for existing session on mount
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Session check error:", error);
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        // UPDATE 2: Security check. If no session, boot them from private pages
+        if (error || !session) {
+          if (error)
+            console.error("Session check error:", error);
+
+          const privatePages = [
+            "dashboard",
+            "my-profile",
+            "edit-profile",
+            "client-edit-profile",
+            "introduction-detail",
+            "stylist-introductions",
+            "stylist-introduction-detail",
+          ];
+          const savedPage =
+            localStorage.getItem("atelistry_page");
+
+          if (savedPage && privatePages.includes(savedPage)) {
+            setCurrentPage("home");
+            localStorage.setItem("atelistry_page", "home");
+          }
+
           setIsCheckingSession(false);
           return;
         }
 
         if (session) {
           // User has an active session
-          const { data: { user } } = await supabase.auth.getUser();
-          
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+
           if (user) {
             // Fetch user profile to determine account type
             const { data: profile } = await supabase
@@ -149,7 +197,10 @@ export default function App() {
           }
         }
       } catch (err) {
-        console.error("Unexpected error during session check:", err);
+        console.error(
+          "Unexpected error during session check:",
+          err,
+        );
       } finally {
         setIsCheckingSession(false);
       }
@@ -163,16 +214,20 @@ export default function App() {
     await supabase.auth.signOut();
     setIsLoggedIn(false);
     setCurrentPage("home");
+    localStorage.setItem("atelistry_page", "home"); // Clear saved page on logout
   };
 
-  // Scroll to top when page changes
+  // UPDATE 3: Save page to memory AND scroll to top when page changes
   useEffect(() => {
+    localStorage.setItem("atelistry_page", currentPage);
     window.scrollTo(0, 0);
   }, [currentPage]);
 
   // Check if current page is a profile page
   const isProfilePage = currentPage.startsWith("profile-");
-  const profileId = isProfilePage ? currentPage.replace("profile-", "") : null;
+  const profileId = isProfilePage
+    ? currentPage.replace("profile-", "")
+    : null;
 
   // Show loading state during session check
   if (isCheckingSession) {
@@ -187,9 +242,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-neutral-950 font-sans text-white selection:bg-red-900 selection:text-white antialiased">
-      <Navbar 
-        onNavigate={setCurrentPage} 
-        currentPage={currentPage} 
+      <Navbar
+        onNavigate={setCurrentPage}
+        currentPage={currentPage}
         isLoggedIn={isLoggedIn}
         onLoginToggle={() => setIsLoggedIn(!isLoggedIn)}
         accountType={accountType}
@@ -197,7 +252,10 @@ export default function App() {
       <main>
         <AnimatePresence mode="wait">
           {currentPage === "home" ? (
-            <LandingPage key="home" onNavigate={setCurrentPage} />
+            <LandingPage
+              key="home"
+              onNavigate={setCurrentPage}
+            />
           ) : currentPage === "narrative" ? (
             <motion.div
               key="narrative"
@@ -208,7 +266,8 @@ export default function App() {
             >
               <Narrative onNavigate={setCurrentPage} />
             </motion.div>
-          ) : currentPage === "platform" || currentPage === "directory" ? (
+          ) : currentPage === "platform" ||
+            currentPage === "directory" ? (
             <motion.div
               key="platform"
               initial={{ opacity: 0 }}
@@ -226,7 +285,10 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <StylistProfile profileId={profileId} onNavigate={setCurrentPage} />
+              <StylistProfile
+                profileId={profileId}
+                onNavigate={setCurrentPage}
+              />
             </motion.div>
           ) : currentPage === "about" ? (
             <motion.div
@@ -248,30 +310,56 @@ export default function App() {
               className="py-60"
             >
               <div className="mx-auto max-w-7xl px-6 md:px-12">
-                 <div className="mb-24 space-y-4">
-                    <span className="text-[10px] font-bold tracking-[0.6em] text-red-900 uppercase">THE JOURNAL</span>
-                    <h2 className="font-serif text-6xl font-light italic text-white tracking-tighter">Editorial <br />Perspective</h2>
-                 </div>
-                 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
-                    {[
-                      { title: "The Rise of Minimal Luxury", date: "FEB 2026", category: "TREND REPORT", img: "https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=2071" },
-                      { title: "Archiving Identity", date: "JAN 2026", category: "STYLING TIPS", img: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070" }
-                    ].map((post, i) => (
-                      <div key={i} className="group cursor-pointer space-y-8">
-                        <div className="aspect-[16/9] overflow-hidden bg-neutral-900 border border-white/5">
-                          <img src={post.img} alt={post.title} className="h-full w-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000" />
-                        </div>
-                        <div className="space-y-4">
-                          <div className="flex justify-between text-[9px] font-bold tracking-[0.3em] text-red-900 uppercase">
-                            <span>{post.category}</span>
-                            <span className="text-neutral-600">{post.date}</span>
-                          </div>
-                          <h3 className="font-serif text-3xl font-light text-white group-hover:text-neutral-400 transition-colors">{post.title}</h3>
-                        </div>
+                <div className="mb-24 space-y-4">
+                  <span className="text-[10px] font-bold tracking-[0.6em] text-red-900 uppercase">
+                    THE JOURNAL
+                  </span>
+                  <h2 className="font-serif text-6xl font-light italic text-white tracking-tighter">
+                    Editorial <br />
+                    Perspective
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
+                  {[
+                    {
+                      title: "The Rise of Minimal Luxury",
+                      date: "FEB 2026",
+                      category: "TREND REPORT",
+                      img: "https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=2071",
+                    },
+                    {
+                      title: "Archiving Identity",
+                      date: "JAN 2026",
+                      category: "STYLING TIPS",
+                      img: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070",
+                    },
+                  ].map((post, i) => (
+                    <div
+                      key={i}
+                      className="group cursor-pointer space-y-8"
+                    >
+                      <div className="aspect-[16/9] overflow-hidden bg-neutral-900 border border-white/5">
+                        <img
+                          src={post.img}
+                          alt={post.title}
+                          className="h-full w-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000"
+                        />
                       </div>
-                    ))}
-                 </div>
+                      <div className="space-y-4">
+                        <div className="flex justify-between text-[9px] font-bold tracking-[0.3em] text-red-900 uppercase">
+                          <span>{post.category}</span>
+                          <span className="text-neutral-600">
+                            {post.date}
+                          </span>
+                        </div>
+                        <h3 className="font-serif text-3xl font-light text-white group-hover:text-neutral-400 transition-colors">
+                          {post.title}
+                        </h3>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           ) : currentPage === "dashboard" ? (
@@ -282,7 +370,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <StylistDashboard 
+              <StylistDashboard
                 onNavigate={setCurrentPage}
                 onLogout={handleLogout}
               />
@@ -325,7 +413,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <MyProfile 
+              <MyProfile
                 onNavigate={setCurrentPage}
                 onLogout={handleLogout}
               />
@@ -338,7 +426,9 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <StylistProfileEditor onNavigate={setCurrentPage} />
+              <StylistProfileEditor
+                onNavigate={setCurrentPage}
+              />
             </motion.div>
           ) : currentPage === "introduction-detail" ? (
             <motion.div
@@ -348,7 +438,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <IntroductionDetail 
+              <IntroductionDetail
                 onNavigate={setCurrentPage}
                 onBack={() => setCurrentPage("my-profile")}
               />
@@ -361,7 +451,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <StylistIntroductions 
+              <StylistIntroductions
                 onNavigate={setCurrentPage}
                 onBack={() => setCurrentPage("my-profile")}
               />
@@ -374,9 +464,11 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <StylistIntroductionDetail 
+              <StylistIntroductionDetail
                 onNavigate={setCurrentPage}
-                onBack={() => setCurrentPage("stylist-introductions")}
+                onBack={() =>
+                  setCurrentPage("stylist-introductions")
+                }
               />
             </motion.div>
           ) : currentPage === "client-edit-profile" ? (
@@ -387,7 +479,9 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <ClientProfileEditor onNavigate={setCurrentPage} />
+              <ClientProfileEditor
+                onNavigate={setCurrentPage}
+              />
             </motion.div>
           ) : currentPage === "sign-in" ? (
             <motion.div
@@ -397,7 +491,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <SignIn 
+              <SignIn
                 onNavigate={setCurrentPage}
                 onSignInSuccess={(type) => {
                   setIsLoggedIn(true);
@@ -406,7 +500,10 @@ export default function App() {
               />
             </motion.div>
           ) : (
-            <LandingPage key="fallback" onNavigate={setCurrentPage} />
+            <LandingPage
+              key="fallback"
+              onNavigate={setCurrentPage}
+            />
           )}
         </AnimatePresence>
       </main>
