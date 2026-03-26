@@ -58,6 +58,7 @@ export const Navbar = ({ onNavigate, currentPage, isLoggedIn, onLoginToggle, acc
               <span className="absolute left-1/2 -translate-x-1/2 -bottom-1 h-px w-[70%] bg-[#8B0000] opacity-0 group-hover:opacity-100 transition-all duration-500" />
             </button>
           </Inquiries>
+          
           <button 
             onClick={() => {
               if (isLoggedIn) {
@@ -90,6 +91,26 @@ export const Navbar = ({ onNavigate, currentPage, isLoggedIn, onLoginToggle, acc
               }`} 
             />
           </button>
+          
+          {!isLoggedIn && (
+            <button 
+              onClick={() => onNavigate("sign-in")}
+              className={`group relative text-[10px] font-medium tracking-[0.3em] uppercase transition-all cursor-pointer ${
+                currentPage === "sign-in" 
+                  ? "text-white" 
+                  : "text-white/40 hover:text-white"
+              }`}
+            >
+              Sign In
+              <span 
+                className={`absolute left-1/2 -translate-x-1/2 -bottom-1 h-px w-[70%] bg-[#8B0000] transition-all duration-500 ${
+                  currentPage === "sign-in" 
+                    ? "opacity-100" 
+                    : "opacity-0 group-hover:opacity-100"
+                }`} 
+              />
+            </button>
+          )}
         </nav>
         
         {/* Mobile Menu Icon */}

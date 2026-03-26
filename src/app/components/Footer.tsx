@@ -32,6 +32,7 @@ export const Footer = ({ onNavigate }: FooterProps) => {
               <li><button onClick={() => onNavigate?.("platform")} className="hover:text-white transition-colors cursor-pointer text-left">Platform</button></li>
               <li><button onClick={() => onNavigate?.("journal")} className="hover:text-white transition-colors cursor-pointer text-left">Journal</button></li>
               <li><button onClick={() => onNavigate?.("access-hub")} className="hover:text-white transition-colors cursor-pointer text-left">Access ATELISTRY</button></li>
+              <li><button onClick={() => onNavigate?.("sign-in")} className="hover:text-white transition-colors cursor-pointer text-left">Member Sign In</button></li>
               <li><button onClick={() => onNavigate?.("my-profile")} className="hover:text-white transition-colors cursor-pointer text-left">Client Profile</button></li>
               <li><button onClick={() => onNavigate?.("dashboard")} className="hover:text-white transition-colors cursor-pointer text-left">Dashboard</button></li>
             </ul>
