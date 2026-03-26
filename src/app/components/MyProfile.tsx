@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { supabase } from "@/lib/supabase";
 
 interface MyProfileProps {
   onNavigate?: (page: string) => void;
@@ -7,13 +8,54 @@ interface MyProfileProps {
 }
 
 export const MyProfile = ({ onNavigate, onLogout }: MyProfileProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [profileData, setProfileData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        // Get the currently logged-in user
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          setError("Unable to retrieve user information.");
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch profile data from profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          setError(null); // No error shown, just no profile
+          setProfileData(null);
+        } else {
+          setProfileData(profile);
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        setError(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
   // Mock data - would come from backend
   const clientData = {
-    name: "Eleanor Richardson",
-    city: "New York",
+    name: profileData?.name || "Eleanor Richardson",
+    city: profileData?.city || "New York",
     memberSince: "January 2026",
     styleInterests: ["Minimalist", "Contemporary", "Tailoring"],
-    styleDescription:
+    styleDescription: profileData?.style_preferences ||
       "I'm seeking a refined, minimal wardrobe that prioritizes quality over quantity. My aesthetic leans toward architectural silhouettes, neutral palettes, and investment pieces that transcend seasons.",
   };
 
@@ -76,213 +118,244 @@ export const MyProfile = ({ onNavigate, onLogout }: MyProfileProps) => {
           <div className="h-px w-12 bg-red-900/40" />
         </motion.div>
 
-        {/* Profile Overview */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.2 }}
-          className="mb-40 space-y-12"
-        >
-          <div className="flex items-end justify-between">
-            <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-              Overview
-            </h2>
-            <button
-              onClick={() => onNavigate?.("client-edit-profile")}
-              className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
-            >
-              Edit Profile
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-x-16 gap-y-12 md:grid-cols-3">
-            <div className="space-y-3">
-              <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
-                Name
-              </p>
-              <p className="font-serif text-xl font-light text-white">
-                {clientData.name}
-              </p>
-            </div>
-            
-            <div className="space-y-3">
-              <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
-                City
-              </p>
-              <p className="font-serif text-xl font-light text-white">
-                {clientData.city}
-              </p>
-            </div>
-            
-            <div className="space-y-3">
-              <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
-                Member Since
-              </p>
-              <p className="font-serif text-xl font-light text-white">
-                {clientData.memberSince}
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-4 pt-8">
-            <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
-              Style Interests
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {clientData.styleInterests.map((interest) => (
-                <span
-                  key={interest}
-                  className="border border-white/10 px-6 py-3 text-[9px] font-medium tracking-[0.3em] text-neutral-400 uppercase"
-                >
-                  {interest}
-                </span>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Style Preferences */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.3 }}
-          className="mb-40 space-y-12 border-t border-white/5 pt-20"
-        >
-          <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-            Style Preferences
-          </h2>
-          
-          <p className="max-w-2xl font-serif text-lg font-light leading-relaxed text-neutral-300">
-            {clientData.styleDescription}
-          </p>
-        </motion.div>
-
-        {/* Saved Stylists */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.4 }}
-          className="mb-40 space-y-12 border-t border-white/5 pt-20"
-        >
-          <div className="flex items-end justify-between">
-            <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-              Saved Stylists
-            </h2>
-            <button
-              onClick={() => onNavigate?.("platform")}
-              className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
-            >
-              Browse Platform
-            </button>
-          </div>
-          
-          <div className="space-y-0">
-            {savedStylists.map((stylist, index) => (
-              <div
-                key={stylist.id}
-                className={`group grid grid-cols-1 gap-6 border-b border-white/5 py-10 transition-all hover:bg-neutral-900/20 md:grid-cols-3 md:items-center ${
-                  index === 0 ? "border-t" : ""
-                }`}
-              >
-                <div className="space-y-1">
-                  <p className="font-serif text-2xl font-light text-white">
-                    {stylist.name}
-                  </p>
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
-                    {stylist.location}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[10px] tracking-[0.2em] text-neutral-400 uppercase">
-                    {stylist.specialty}
-                  </p>
-                </div>
-
-                <div className="flex justify-start md:justify-end">
-                  <button
-                    onClick={() => onNavigate?.(`profile-${stylist.id}`)}
-                    className="border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.3em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white"
-                  >
-                    View Profile
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Introductions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.5 }}
-          className="mb-40 space-y-12 border-t border-white/5 pt-20"
-        >
-          <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-            Introductions
-          </h2>
-          
-          <p className="text-[10px] leading-[2] tracking-[0.2em] text-neutral-600 uppercase">
-            Curated stylist introductions facilitated by our concierge team.
-          </p>
-
-          <div className="space-y-0">
-            {introductions.map((intro, index) => (
-              <div
-                key={intro.id}
-                className={`group grid grid-cols-1 gap-6 border-b border-white/5 py-10 transition-all hover:bg-neutral-900/20 md:grid-cols-4 md:items-center ${
-                  index === 0 ? "border-t" : ""
-                }`}
-              >
-                <div className="space-y-1">
-                  <p className="font-serif text-2xl font-light text-white">
-                    {intro.stylist}
-                  </p>
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
-                    {intro.date}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[10px] tracking-[0.2em] text-neutral-400 uppercase">
-                    {intro.specialty}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="text-[9px] font-bold tracking-[0.4em] text-emerald-600 uppercase">
-                    {intro.status}
-                  </span>
-                </div>
-
-                <div className="flex justify-start md:justify-end">
-                  <button 
-                    onClick={() => onNavigate?.("introduction-detail")}
-                    className="border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.3em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white"
-                  >
-                    View Details
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Actions */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.6 }}
-          className="border-t border-white/5 pt-12"
-        >
-          <button
-            onClick={onLogout}
-            className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
+        {/* Loading State */}
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="py-40 text-center"
           >
-            Sign Out
-          </button>
-        </motion.div>
+            <p className="text-[10px] tracking-[0.3em] text-neutral-600 uppercase">
+              Loading profile...
+            </p>
+          </motion.div>
+        )}
+
+        {/* No Profile Fallback */}
+        {!isLoading && !profileData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="py-40 text-center"
+          >
+            <p className="font-serif text-xl text-neutral-500">
+              Profile not yet available.
+            </p>
+          </motion.div>
+        )}
+
+        {/* Profile Content - Only show if we have data or are using fallback */}
+        {!isLoading && (
+          <>
+            {/* Profile Overview */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.2 }}
+              className="mb-40 space-y-12"
+            >
+              <div className="flex items-end justify-between">
+                <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+                  Overview
+                </h2>
+                <button
+                  onClick={() => onNavigate?.("client-edit-profile")}
+                  className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
+                >
+                  Edit Profile
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-x-16 gap-y-12 md:grid-cols-3">
+                <div className="space-y-3">
+                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                    Name
+                  </p>
+                  <p className="font-serif text-xl font-light text-white">
+                    {clientData.name}
+                  </p>
+                </div>
+                
+                <div className="space-y-3">
+                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                    City
+                  </p>
+                  <p className="font-serif text-xl font-light text-white">
+                    {clientData.city}
+                  </p>
+                </div>
+                
+                <div className="space-y-3">
+                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                    Member Since
+                  </p>
+                  <p className="font-serif text-xl font-light text-white">
+                    {clientData.memberSince}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-8">
+                <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                  Style Interests
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {clientData.styleInterests.map((interest) => (
+                    <span
+                      key={interest}
+                      className="border border-white/10 px-6 py-3 text-[9px] font-medium tracking-[0.3em] text-neutral-400 uppercase"
+                    >
+                      {interest}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Style Preferences */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.3 }}
+              className="mb-40 space-y-12 border-t border-white/5 pt-20"
+            >
+              <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+                Style Preferences
+              </h2>
+              
+              <p className="max-w-2xl font-serif text-lg font-light leading-relaxed text-neutral-300">
+                {clientData.styleDescription}
+              </p>
+            </motion.div>
+
+            {/* Saved Stylists */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.4 }}
+              className="mb-40 space-y-12 border-t border-white/5 pt-20"
+            >
+              <div className="flex items-end justify-between">
+                <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+                  Saved Stylists
+                </h2>
+                <button
+                  onClick={() => onNavigate?.("platform")}
+                  className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
+                >
+                  Browse Platform
+                </button>
+              </div>
+              
+              <div className="space-y-0">
+                {savedStylists.map((stylist, index) => (
+                  <div
+                    key={stylist.id}
+                    className={`group grid grid-cols-1 gap-6 border-b border-white/5 py-10 transition-all hover:bg-neutral-900/20 md:grid-cols-3 md:items-center ${
+                      index === 0 ? "border-t" : ""
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <p className="font-serif text-2xl font-light text-white">
+                        {stylist.name}
+                      </p>
+                      <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                        {stylist.location}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] tracking-[0.2em] text-neutral-400 uppercase">
+                        {stylist.specialty}
+                      </p>
+                    </div>
+
+                    <div className="flex justify-start md:justify-end">
+                      <button
+                        onClick={() => onNavigate?.(`profile-${stylist.id}`)}
+                        className="border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.3em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white"
+                      >
+                        View Profile
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Introductions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.5 }}
+              className="mb-40 space-y-12 border-t border-white/5 pt-20"
+            >
+              <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+                Introductions
+              </h2>
+              
+              <p className="text-[10px] leading-[2] tracking-[0.2em] text-neutral-600 uppercase">
+                Curated stylist introductions facilitated by our concierge team.
+              </p>
+
+              <div className="space-y-0">
+                {introductions.map((intro, index) => (
+                  <div
+                    key={intro.id}
+                    className={`group grid grid-cols-1 gap-6 border-b border-white/5 py-10 transition-all hover:bg-neutral-900/20 md:grid-cols-4 md:items-center ${
+                      index === 0 ? "border-t" : ""
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <p className="font-serif text-2xl font-light text-white">
+                        {intro.stylist}
+                      </p>
+                      <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                        {intro.date}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] tracking-[0.2em] text-neutral-400 uppercase">
+                        {intro.specialty}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-[9px] font-bold tracking-[0.4em] text-emerald-600 uppercase">
+                        {intro.status}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-start md:justify-end">
+                      <button 
+                        onClick={() => onNavigate?.("introduction-detail")}
+                        className="border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.3em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white"
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Actions */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.6 }}
+              className="border-t border-white/5 pt-12"
+            >
+              <button
+                onClick={onLogout}
+                className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
+              >
+                Sign Out
+              </button>
+            </motion.div>
+          </>
+        )}
       </div>
     </div>
   );
