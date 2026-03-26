@@ -1,12 +1,10 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/lib/supabase";
 
-interface AccessProps {
-  onNavigate?: (page: string) => void;
-}
-
-export const Access = ({ onNavigate }: AccessProps) => {
+export const Access = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -83,7 +81,7 @@ export const Access = ({ onNavigate }: AccessProps) => {
             Thank you for your interest in ATELISTRY. A member of our concierge team will review your request and respond personally within 48 hours.
           </p>
           <button
-            onClick={() => onNavigate?.("home")}
+            onClick={() => navigate("/")}
             className="text-[10px] font-medium tracking-[0.3em] text-neutral-600 uppercase hover:text-white transition-all border-b border-white/5 pb-2"
           >
             Return Home

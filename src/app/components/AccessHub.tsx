@@ -1,11 +1,8 @@
 import React from "react";
+import { Link } from "react-router";
 import { motion } from "motion/react";
 
-interface AccessHubProps {
-  onNavigate?: (page: string) => void;
-}
-
-export const AccessHub = ({ onNavigate }: AccessHubProps) => {
+export const AccessHub = () => {
   return (
     <div className="bg-neutral-950 pt-32 text-white overflow-hidden">
       {/* Page Header */}
@@ -71,12 +68,12 @@ export const AccessHub = ({ onNavigate }: AccessHubProps) => {
             </div>
 
             <div className="pt-8 space-y-6">
-              <button
-                onClick={() => onNavigate?.("access")}
-                className="w-full px-12 py-6 border border-white/10 text-[10px] font-bold tracking-[0.5em] text-white uppercase hover:bg-white hover:text-black transition-all"
+              <Link
+                to="/access"
+                className="block w-full px-12 py-6 border border-white/10 text-[10px] font-bold tracking-[0.5em] text-white uppercase hover:bg-white hover:text-black transition-all text-center"
               >
                 Request Access
-              </button>
+              </Link>
               <p className="text-[10px] tracking-[0.2em] text-neutral-600 uppercase text-center">
                 Handled through our concierge
               </p>
@@ -124,12 +121,12 @@ export const AccessHub = ({ onNavigate }: AccessHubProps) => {
             </div>
 
             <div className="pt-8 space-y-6">
-              <button
-                onClick={() => onNavigate?.("stylist-application")}
-                className="w-full px-12 py-6 border border-white/10 text-[10px] font-bold tracking-[0.5em] text-white uppercase hover:bg-white hover:text-black transition-all"
+              <Link
+                to="/stylist-application"
+                className="block w-full px-12 py-6 border border-white/10 text-[10px] font-bold tracking-[0.5em] text-white uppercase hover:bg-white hover:text-black transition-all text-center"
               >
                 Apply for Access
-              </button>
+              </Link>
               <p className="text-[10px] tracking-[0.2em] text-neutral-600 uppercase text-center">
                 Applications are reviewed
               </p>

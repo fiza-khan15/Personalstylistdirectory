@@ -1,12 +1,9 @@
 import React from "react";
+import { Link } from "react-router";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { motion } from "motion/react";
 
-interface HeroProps {
-  onNavigate?: (page: string) => void;
-}
-
-export const Hero = ({ onNavigate }: HeroProps) => {
+export const Hero = () => {
   return (
     <section className="relative flex h-screen w-full items-center justify-center overflow-hidden bg-neutral-950 pt-20">
       <div className="mx-auto flex max-w-7xl w-full px-6 md:px-12 items-center">
@@ -27,19 +24,19 @@ export const Hero = ({ onNavigate }: HeroProps) => {
               A curated global platform connecting visionary personal stylists with individuals who value identity, intention, and discretion.
             </p>
             <div className="flex gap-8 text-[10px] font-medium tracking-[0.3em] uppercase">
-              <button 
-                onClick={() => onNavigate?.("directory")}
+              <Link 
+                to="/directory"
                 className="text-white/40 hover:text-white transition-all"
               >
                 The Platform
-              </button>
+              </Link>
               <span className="text-neutral-700">·</span>
-              <button 
-                onClick={() => onNavigate?.("narrative")}
+              <Link 
+                to="/narrative"
                 className="text-white/40 hover:text-white transition-all"
               >
                 The Narrative
-              </button>
+              </Link>
             </div>
           </motion.div>
 

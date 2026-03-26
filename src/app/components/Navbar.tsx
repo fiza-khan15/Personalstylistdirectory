@@ -1,16 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
 import { Search, Menu } from "lucide-react";
 import { Inquiries } from "./Inquiries";
+import { supabase } from "@/lib/supabase";
 
-interface NavbarProps {
-  onNavigate: (page: string) => void;
-  currentPage: string;
-  isLoggedIn: boolean;
-  onLoginToggle: () => void;
-  accountType?: "client" | "stylist"; // Added account type
-}
+export const Navbar = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [accountType, setAccountType] = useState<"client" | "stylist" | null>(null);
 
-export const Navbar = ({ onNavigate, currentPage, isLoggedIn, onLoginToggle, accountType }: NavbarProps) => {
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("account_type")
+            .eq("user_id", user.id)
+            .single();
+
+          setAccountType(profile?.account_type || "client");
+          setIsLoggedIn(true);
+        }
+      } else {
+        setIsLoggedIn(false);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        checkAuth();
+      } else {
+        setIsLoggedIn(false);
+        setAccountType(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const currentPage = location.pathname.split("/")[1] || "home";
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-white/5 bg-neutral-950/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 md:px-12">
@@ -21,9 +59,9 @@ export const Navbar = ({ onNavigate, currentPage, isLoggedIn, onLoginToggle, acc
             { id: "platform", label: "Platform" },
             { id: "journal", label: "Journal" },
           ].map((item) => (
-            <button
+            <Link
               key={item.id}
-              onClick={() => onNavigate(item.id)}
+              to={`/${item.id}`}
               className={`group relative text-[10px] font-medium tracking-[0.3em] uppercase transition-all cursor-pointer ${
                 currentPage === item.id ? "text-white" : "text-white/40 hover:text-white"
               }`}
@@ -36,18 +74,18 @@ export const Navbar = ({ onNavigate, currentPage, isLoggedIn, onLoginToggle, acc
                     : "opacity-0 group-hover:opacity-100"
                 }`} 
               />
-            </button>
+            </Link>
           ))}
         </nav>
         
         {/* Center Logo */}
         <div className="absolute left-1/2 -translate-x-1/2">
-          <button 
-            onClick={() => onNavigate("home")}
+          <Link 
+            to="/"
             className="cursor-pointer font-serif text-3xl tracking-[0.2em] text-white uppercase font-light hover:text-red-900 transition-all duration-500 outline-none"
           >
             ATELISTRY
-          </button>
+          </Link>
         </div>
 
         {/* Right Navigation */}
@@ -59,18 +97,13 @@ export const Navbar = ({ onNavigate, currentPage, isLoggedIn, onLoginToggle, acc
             </button>
           </Inquiries>
           
-          <button 
-            onClick={() => {
-              if (isLoggedIn) {
-                if (accountType === "client") {
-                  onNavigate("my-profile");
-                } else {
-                  onNavigate("dashboard");
-                }
-              } else {
-                onNavigate("access-hub");
-              }
-            }}
+          <Link 
+            to={isLoggedIn 
+              ? accountType === "client" 
+                ? "/my-profile" 
+                : "/dashboard"
+              : "/access-hub"
+            }
             className={`group relative text-[10px] font-medium tracking-[0.3em] uppercase transition-all cursor-pointer ${
               currentPage === "my-profile" || currentPage === "dashboard" || currentPage === "access-hub" 
                 ? "text-white" 
@@ -90,11 +123,11 @@ export const Navbar = ({ onNavigate, currentPage, isLoggedIn, onLoginToggle, acc
                   : "opacity-0 group-hover:opacity-100"
               }`} 
             />
-          </button>
+          </Link>
           
           {!isLoggedIn && (
-            <button 
-              onClick={() => onNavigate("sign-in")}
+            <Link 
+              to="/sign-in"
               className={`group relative text-[10px] font-medium tracking-[0.3em] uppercase transition-all cursor-pointer ${
                 currentPage === "sign-in" 
                   ? "text-white" 
@@ -109,7 +142,7 @@ export const Navbar = ({ onNavigate, currentPage, isLoggedIn, onLoginToggle, acc
                     : "opacity-0 group-hover:opacity-100"
                 }`} 
               />
-            </button>
+            </Link>
           )}
         </nav>
         

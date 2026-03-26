@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { supabase } from "@/lib/supabase";
 
-interface MyProfileProps {
-  onNavigate?: (page: string) => void;
-  onLogout?: () => void;
-}
-
-export const MyProfile = ({ onNavigate, onLogout }: MyProfileProps) => {
+export const MyProfile = () => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +112,7 @@ export const MyProfile = ({ onNavigate, onLogout }: MyProfileProps) => {
                   Overview
                 </h2>
                 <button
-                  onClick={() => onNavigate?.("client-edit-profile")}
+                  onClick={() => navigate("/client-edit-profile")}
                   className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
                 >
                   Edit Profile
@@ -198,7 +195,7 @@ export const MyProfile = ({ onNavigate, onLogout }: MyProfileProps) => {
               className="border-t border-white/5 pt-12"
             >
               <button
-                onClick={onLogout}
+                onClick={() => supabase.auth.signOut().then(() => navigate("/login"))}
                 className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
               >
                 Sign Out

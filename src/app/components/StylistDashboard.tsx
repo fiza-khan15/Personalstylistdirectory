@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { useNavigate } from "react-router";
+import { motion } from "motion/react";
 import { supabase } from "@/lib/supabase";
 
-interface StylistDashboardProps {
-  onNavigate: (page: string) => void;
-  onLogout: () => void;
-}
-
-export const StylistDashboard = ({ onNavigate, onLogout }: StylistDashboardProps) => {
+export const StylistDashboard = () => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
   
@@ -83,7 +80,7 @@ export const StylistDashboard = ({ onNavigate, onLogout }: StylistDashboardProps
           </div>
 
           <button
-            onClick={() => onNavigate("stylist-introductions")}
+            onClick={() => navigate("/stylist-introductions")}
             className="group border border-white/5 bg-neutral-900/30 p-10 text-left transition-all duration-500 hover:border-white/10 hover:bg-neutral-900/40"
           >
             <div className="space-y-6">
@@ -115,7 +112,7 @@ export const StylistDashboard = ({ onNavigate, onLogout }: StylistDashboardProps
                 Active & Verified
               </p>
               <button 
-                onClick={() => onNavigate("edit-profile")}
+                onClick={() => navigate("/edit-profile")}
                 className="mt-4 inline-block border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.4em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white"
               >
                 Edit Profile
@@ -130,7 +127,7 @@ export const StylistDashboard = ({ onNavigate, onLogout }: StylistDashboardProps
                 {profileData?.accepting_clients ? "Accepting Clients" : "Not Accepting Clients"}
               </p>
               <button 
-                onClick={() => onNavigate("edit-profile")}
+                onClick={() => navigate("/edit-profile")}
                 className="mt-4 inline-block border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.4em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white">
                 Update Status
               </button>
@@ -141,7 +138,7 @@ export const StylistDashboard = ({ onNavigate, onLogout }: StylistDashboardProps
         {/* Logout */}
         <div className="mt-24 border-t border-white/5 pt-12">
           <button
-            onClick={onLogout}
+            onClick={() => supabase.auth.signOut()}
             className="text-[9px] font-medium tracking-[0.4em] text-neutral-600 uppercase transition-colors hover:text-white"
           >
             Sign Out

@@ -1,14 +1,10 @@
 import React, { useState, useMemo } from "react";
-import { stylists } from "@/app/data/stylists";
+import { stylists } from "../data/stylists";
 import { StylistCard } from "./StylistCard";
 import { motion } from "motion/react";
 import { Inquiries } from "./Inquiries";
 
-interface DirectoryProps {
-  onNavigate?: (page: string) => void;
-}
-
-export const Directory = ({ onNavigate }: DirectoryProps) => {
+export const Directory = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredStylists = useMemo(() => {
@@ -121,7 +117,7 @@ export const Directory = ({ onNavigate }: DirectoryProps) => {
         {/* Stylist Grid */}
         <div className="grid grid-cols-1 gap-x-8 gap-y-32 sm:grid-cols-2 lg:grid-cols-4">
           {filteredStylists.map((stylist) => (
-            <StylistCard key={stylist.id} stylist={stylist} onNavigate={onNavigate} />
+            <StylistCard key={stylist.id} stylist={stylist} />
           ))}
         </div>
         

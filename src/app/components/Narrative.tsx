@@ -1,13 +1,10 @@
 import React from "react";
+import { Link } from "react-router";
 import { motion } from "motion/react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Inquiries } from "./Inquiries";
 
-interface NarrativeProps {
-  onNavigate?: (page: string) => void;
-}
-
-export const Narrative = ({ onNavigate }: NarrativeProps) => {
+export const Narrative = () => {
   return (
     <div className="bg-neutral-950 pt-32 text-white overflow-hidden">
       {/* Hero Section */}
@@ -221,12 +218,12 @@ export const Narrative = ({ onNavigate }: NarrativeProps) => {
             ATELISTRY is not a destination for browsing. It is a space for considered connection.
           </p>
           <div className="flex gap-8 justify-center text-[10px] font-medium tracking-[0.3em] uppercase">
-            <button 
-              onClick={() => onNavigate?.("directory")}
+            <Link 
+              to="/directory"
               className="text-white/40 hover:text-white transition-all border-b border-white/5 pb-2"
             >
               Explore the Platform
-            </button>
+            </Link>
             <span className="text-neutral-700">·</span>
             <Inquiries>
               <button className="text-white/40 hover:text-white transition-all border-b border-white/5 pb-2">

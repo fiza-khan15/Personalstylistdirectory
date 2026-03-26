@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { supabase } from "@/lib/supabase";
 import { Inquiries } from "./Inquiries";
 
-interface StylistProfileProps {
-  profileId: string;
-  onNavigate?: (page: string) => void;
-}
-
-export const StylistProfile = ({ profileId, onNavigate }: StylistProfileProps) => {
+export const StylistProfile = () => {
+  const { profileId } = useParams();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
 
@@ -35,7 +33,9 @@ export const StylistProfile = ({ profileId, onNavigate }: StylistProfileProps) =
       }
     };
 
-    fetchProfile();
+    if (profileId) {
+      fetchProfile();
+    }
   }, [profileId]);
 
   if (isLoading) {
@@ -56,7 +56,7 @@ export const StylistProfile = ({ profileId, onNavigate }: StylistProfileProps) =
             Profile not yet available.
           </p>
           <button
-            onClick={() => onNavigate?.("directory")}
+            onClick={() => navigate("/directory")}
             className="text-[10px] font-medium tracking-[0.3em] text-neutral-600 uppercase hover:text-white transition-all"
           >
             ← Back to Network
@@ -220,7 +220,7 @@ export const StylistProfile = ({ profileId, onNavigate }: StylistProfileProps) =
       {/* Back to Network */}
       <section className="py-40 text-center border-t border-white/5">
         <button
-          onClick={() => onNavigate?.("directory")}
+          onClick={() => navigate("/directory")}
           className="text-[10px] font-medium tracking-[0.3em] text-neutral-600 uppercase hover:text-white transition-all"
         >
           ← Back to Network

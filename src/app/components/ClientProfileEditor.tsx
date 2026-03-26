@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { supabase } from "@/lib/supabase";
 
-interface ClientProfileEditorProps {
-  onNavigate: (page: string) => void;
-}
-
-export const ClientProfileEditor = ({ onNavigate }: ClientProfileEditorProps) => {
+export const ClientProfileEditor = () => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [name, setName] = useState("");
@@ -82,20 +80,20 @@ export const ClientProfileEditor = ({ onNavigate }: ClientProfileEditorProps) =>
         return;
       }
 
-      const { data: profile, error: profileError } = await supabase
+      const { error: profileError } = await supabase
         .from("profiles")
-        .upsert([
-          {
-            user_id: user.id,
-            name,
-            city,
-            style_preferences: styleDescription,
-            style_interests: selectedInterests,
-          },
-        ]);
+        .upsert({
+          user_id: user.id,
+          name,
+          city,
+          style_preferences: styleDescription,
+          style_interests: selectedInterests,
+        });
 
-      if (!profileError && profile) {
-        onNavigate("my-profile");
+      if (profileError) {
+        console.error("Profile update error:", profileError);
+      } else {
+        navigate("/my-profile");
       }
     } catch (err) {
       console.error("Unexpected error:", err);
@@ -233,7 +231,7 @@ export const ClientProfileEditor = ({ onNavigate }: ClientProfileEditorProps) =>
             </button>
             
             <button
-              onClick={() => onNavigate("my-profile")}
+              onClick={() => navigate("/my-profile")}
               className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
             >
               Cancel
@@ -249,7 +247,7 @@ export const ClientProfileEditor = ({ onNavigate }: ClientProfileEditorProps) =>
           className="mt-24 border-t border-white/5 pt-12"
         >
           <button
-            onClick={() => onNavigate("my-profile")}
+            onClick={() => navigate("/my-profile")}
             className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
           >
             ← Back to Profile

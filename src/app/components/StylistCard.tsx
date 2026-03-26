@@ -1,42 +1,42 @@
 import React from "react";
-import { Stylist } from "@/app/data/stylists";
-import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
+import { Link } from "react-router";
+import { Stylist } from "../data/stylists";
 
 interface StylistCardProps {
   stylist: Stylist;
-  onNavigate?: (page: string) => void;
 }
 
-export const StylistCard = ({ stylist, onNavigate }: StylistCardProps) => {
-  const handleClick = () => {
-    if (onNavigate) {
-      onNavigate(`profile-${stylist.id}`);
-    }
-  };
-
+export const StylistCard = ({ stylist }: StylistCardProps) => {
   return (
-    <div className="group relative flex flex-col space-y-6 cursor-pointer" onClick={handleClick}>
-      <div className="relative aspect-[3/4] overflow-hidden bg-neutral-900 border border-white/5">
-        <ImageWithFallback
+    <Link 
+      to={`/stylist/${stylist.id}`}
+      className="group block space-y-8 cursor-pointer"
+    >
+      <div className="aspect-[3/4] overflow-hidden bg-neutral-900">
+        <img
           src={stylist.imageUrl}
           alt={stylist.name}
-          className="h-full w-full object-cover grayscale transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
+          className="h-full w-full object-cover grayscale transition-transform duration-[3s] group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-neutral-950/40 opacity-0 transition-opacity duration-500 group-hover:opacity-100 flex items-center justify-center">
-            <div className="text-[10px] font-bold tracking-[0.4em] text-white uppercase border border-white/20 px-6 py-3 backdrop-blur-sm group-hover:bg-white group-hover:text-black transition-all">
-                View Profile
-            </div>
-        </div>
       </div>
-      
-      <div className="space-y-1 text-center lg:text-left">
-        <h3 className="font-serif text-lg tracking-wide text-white font-light group-hover:text-red-900 transition-colors">
+      <div className="space-y-2">
+        <h3 className="font-serif text-2xl font-light tracking-tight text-white group-hover:text-neutral-400 transition-colors">
           {stylist.name}
         </h3>
-        <p className="text-[9px] font-medium tracking-[0.2em] text-neutral-500 uppercase">
-          {stylist.title} — {stylist.location}
+        <p className="text-[10px] tracking-[0.2em] text-neutral-600 uppercase">
+          {stylist.location}
         </p>
+        <div className="flex flex-wrap gap-2 pt-2">
+          {stylist.specialties.slice(0, 2).map((spec, i) => (
+            <span
+              key={i}
+              className="text-[9px] tracking-[0.2em] text-neutral-700 uppercase"
+            >
+              {spec}
+            </span>
+          ))}
+        </div>
       </div>
-    </div>
+    </Link>
   );
 };

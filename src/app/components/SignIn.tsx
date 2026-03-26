@@ -1,12 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router";
 import { supabase } from "@/lib/supabase";
 
-interface SignInProps {
-  onNavigate: (page: string) => void;
-  onSignInSuccess: (accountType: "client" | "stylist") => void;
-}
-
-export const SignIn = ({ onNavigate, onSignInSuccess }: SignInProps) => {
+export const SignIn = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -43,8 +40,7 @@ export const SignIn = ({ onNavigate, onSignInSuccess }: SignInProps) => {
       // In production, you'd fetch this from user metadata or a separate table
       const accountType = data.user?.email?.includes("stylist") ? "stylist" : "client";
       
-      onSignInSuccess(accountType);
-      onNavigate(accountType === "stylist" ? "dashboard" : "my-profile");
+      navigate(accountType === "stylist" ? "/dashboard" : "/my-profile");
     } catch (err) {
       console.error("Unexpected error:", err);
       setError("An unexpected error occurred. Please try again.");
@@ -135,7 +131,7 @@ export const SignIn = ({ onNavigate, onSignInSuccess }: SignInProps) => {
           <p className="text-[10px] tracking-[0.2em] text-neutral-600 uppercase">
             Have not yet received access?{" "}
             <button
-              onClick={() => onNavigate("access-hub")}
+              onClick={() => navigate("/access-hub")}
               className="text-neutral-500 hover:text-white transition-colors underline underline-offset-4"
             >
               Submit a request
