@@ -1,14 +1,71 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Stylist } from "@/app/data/stylists";
+import { supabase } from "@/lib/supabase";
 import { Inquiries } from "./Inquiries";
 
 interface StylistProfileProps {
-  stylist: Stylist;
+  profileId: string;
   onNavigate?: (page: string) => void;
 }
 
-export const StylistProfile = ({ stylist, onNavigate }: StylistProfileProps) => {
+export const StylistProfile = ({ profileId, onNavigate }: StylistProfileProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", profileId)
+          .eq("account_type", "stylist")
+          .single();
+
+        if (error) {
+          console.error("Profile fetch error:", error);
+          setProfile(null);
+        } else {
+          setProfile(data);
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [profileId]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+        <p className="text-[10px] tracking-[0.3em] text-neutral-600 uppercase">
+          Loading profile...
+        </p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+        <div className="text-center space-y-8">
+          <p className="font-serif text-xl text-neutral-500">
+            Profile not yet available.
+          </p>
+          <button
+            onClick={() => onNavigate?.("directory")}
+            className="text-[10px] font-medium tracking-[0.3em] text-neutral-600 uppercase hover:text-white transition-all"
+          >
+            ← Back to Network
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-neutral-950 pt-32 text-white overflow-hidden">
       {/* Header Section */}
@@ -24,14 +81,14 @@ export const StylistProfile = ({ stylist, onNavigate }: StylistProfileProps) => 
             <div className="h-px w-16 bg-red-900" />
             <div className="space-y-6">
               <h1 className="font-serif text-6xl md:text-7xl font-light tracking-tight text-white">
-                {stylist.name}
+                {profile.name || "Not yet provided"}
               </h1>
               <p className="text-sm tracking-[0.15em] text-neutral-400 uppercase">
-                {stylist.title}
+                {profile.title || "Not yet provided"}
               </p>
               <div className="flex items-center gap-3 text-[11px] tracking-[0.2em] text-neutral-500 uppercase">
                 <span className="text-neutral-700">Based in —</span>
-                <span>{stylist.location}</span>
+                <span>{profile.location || profile.city || "Not yet provided"}</span>
               </div>
             </div>
           </motion.div>
@@ -44,8 +101,8 @@ export const StylistProfile = ({ stylist, onNavigate }: StylistProfileProps) => 
             className="aspect-[4/5] bg-neutral-900 overflow-hidden grayscale"
           >
             <img
-              src={stylist.imageUrl}
-              alt={stylist.name}
+              src={profile.imageUrl}
+              alt={profile.name}
               className="h-full w-full object-cover"
             />
           </motion.div>
@@ -59,20 +116,20 @@ export const StylistProfile = ({ stylist, onNavigate }: StylistProfileProps) => 
             Profile
           </span>
           <p className="text-sm leading-[2.2] tracking-[0.05em] text-neutral-300">
-            {stylist.profileIntro || stylist.bio}
+            {profile.profileIntro || profile.bio || "Not yet provided"}
           </p>
         </div>
       </section>
 
       {/* Areas of Practice */}
-      {stylist.areasOfPractice && stylist.areasOfPractice.length > 0 && (
+      {profile.areasOfPractice && profile.areasOfPractice.length > 0 && (
         <section className="mx-auto max-w-4xl px-6 md:px-12 py-40 border-t border-white/5">
           <div className="space-y-12">
             <span className="text-[10px] font-bold tracking-[0.5em] text-red-900 uppercase">
               Areas of Practice
             </span>
             <ul className="space-y-6">
-              {stylist.areasOfPractice.map((area, index) => (
+              {profile.areasOfPractice.map((area, index) => (
                 <li
                   key={index}
                   className="text-sm tracking-[0.1em] text-neutral-400 border-l-[1px] border-white/10 pl-6"
@@ -86,7 +143,7 @@ export const StylistProfile = ({ stylist, onNavigate }: StylistProfileProps) => 
       )}
 
       {/* Approach & Philosophy */}
-      {stylist.approach && (
+      {profile.approach && (
         <section className="bg-neutral-900/20 py-60 border-y border-white/5">
           <div className="mx-auto max-w-4xl px-6 md:px-12">
             <div className="space-y-12">
@@ -94,7 +151,7 @@ export const StylistProfile = ({ stylist, onNavigate }: StylistProfileProps) => 
                 Approach
               </span>
               <p className="text-sm leading-[2.2] tracking-[0.05em] text-neutral-300">
-                {stylist.approach}
+                {profile.approach}
               </p>
             </div>
           </div>
@@ -102,20 +159,20 @@ export const StylistProfile = ({ stylist, onNavigate }: StylistProfileProps) => 
       )}
 
       {/* Who They Work With */}
-      {stylist.clientContext && stylist.clientContext.length > 0 && (
+      {profile.clientContext && profile.clientContext.length > 0 && (
         <section className="mx-auto max-w-4xl px-6 md:px-12 py-40">
           <div className="space-y-12">
             <span className="text-[10px] font-bold tracking-[0.5em] text-red-900 uppercase">
               Who They Work With
             </span>
             <div className="flex flex-wrap gap-8">
-              {stylist.clientContext.map((context, index) => (
+              {profile.clientContext.map((context, index) => (
                 <span
                   key={index}
                   className="text-sm tracking-[0.1em] text-neutral-400 italic"
                 >
                   {context}
-                  {index < stylist.clientContext!.length - 1 && (
+                  {index < profile.clientContext!.length - 1 && (
                     <span className="mx-4 text-neutral-700">·</span>
                   )}
                 </span>

@@ -17,8 +17,8 @@ import { StylistIntroductions } from "@/app/components/StylistIntroductions";
 import { StylistIntroductionDetail } from "@/app/components/StylistIntroductionDetail";
 import { ClientProfileEditor } from "@/app/components/ClientProfileEditor";
 import { SignIn } from "@/app/components/SignIn";
-import { stylists } from "@/app/data/stylists";
 import { motion, AnimatePresence } from "motion/react";
+import { supabase } from "@/lib/supabase";
 
 const FeaturedInsight = () => {
   return (
@@ -115,7 +115,55 @@ const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accountType, setAccountType] = useState<"client" | "stylist">("stylist"); // Default to stylist for demo
+  const [accountType, setAccountType] = useState<"client" | "stylist">("client");
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  // Check for existing session on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session check error:", error);
+          setIsCheckingSession(false);
+          return;
+        }
+
+        if (session) {
+          // User has an active session
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            // Fetch user profile to determine account type
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("account_type")
+              .eq("user_id", user.id)
+              .single();
+
+            if (profile) {
+              setIsLoggedIn(true);
+              setAccountType(profile.account_type || "client");
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Unexpected error during session check:", err);
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  // Handle logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsLoggedIn(false);
+    setCurrentPage("home");
+  };
 
   // Scroll to top when page changes
   useEffect(() => {
@@ -125,7 +173,17 @@ export default function App() {
   // Check if current page is a profile page
   const isProfilePage = currentPage.startsWith("profile-");
   const profileId = isProfilePage ? currentPage.replace("profile-", "") : null;
-  const currentStylist = profileId ? stylists.find(s => s.id === profileId) : null;
+
+  // Show loading state during session check
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+        <p className="text-[10px] tracking-[0.3em] text-neutral-600 uppercase">
+          Loading...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-950 font-sans text-white selection:bg-red-900 selection:text-white antialiased">
@@ -160,7 +218,7 @@ export default function App() {
             >
               <Directory onNavigate={setCurrentPage} />
             </motion.div>
-          ) : isProfilePage && currentStylist ? (
+          ) : isProfilePage && profileId ? (
             <motion.div
               key={currentPage}
               initial={{ opacity: 0 }}
@@ -168,7 +226,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <StylistProfile stylist={currentStylist} onNavigate={setCurrentPage} />
+              <StylistProfile profileId={profileId} onNavigate={setCurrentPage} />
             </motion.div>
           ) : currentPage === "about" ? (
             <motion.div
@@ -226,10 +284,7 @@ export default function App() {
             >
               <StylistDashboard 
                 onNavigate={setCurrentPage}
-                onLogout={() => {
-                  setIsLoggedIn(false);
-                  setCurrentPage("home");
-                }}
+                onLogout={handleLogout}
               />
             </motion.div>
           ) : currentPage === "access" ? (
@@ -272,10 +327,7 @@ export default function App() {
             >
               <MyProfile 
                 onNavigate={setCurrentPage}
-                onLogout={() => {
-                  setIsLoggedIn(false);
-                  setCurrentPage("home");
-                }}
+                onLogout={handleLogout}
               />
             </motion.div>
           ) : currentPage === "edit-profile" ? (

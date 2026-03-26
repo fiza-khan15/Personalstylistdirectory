@@ -1,17 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { supabase } from "@/lib/supabase";
 
 interface ClientProfileEditorProps {
   onNavigate: (page: string) => void;
 }
 
 export const ClientProfileEditor = ({ onNavigate }: ClientProfileEditorProps) => {
-  // Mock data - would come from backend
-  const [name, setName] = useState("Eleanor Richardson");
-  const [city, setCity] = useState("New York");
-  const [styleDescription, setStyleDescription] = useState(
-    "I'm seeking a refined, minimal wardrobe that prioritizes quality over quantity. My aesthetic leans toward architectural silhouettes, neutral palettes, and investment pieces that transcend seasons."
-  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("");
+  const [styleDescription, setStyleDescription] = useState("");
 
   const availableInterests = [
     "Minimalist",
@@ -28,11 +28,40 @@ export const ClientProfileEditor = ({ onNavigate }: ClientProfileEditorProps) =>
     "Emerging Designers",
   ];
 
-  const [selectedInterests, setSelectedInterests] = useState([
-    "Minimalist",
-    "Contemporary",
-    "Tailoring",
-  ]);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.error("Auth error:", authError);
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (!profileError && profile) {
+          setName(profile.name || "");
+          setCity(profile.city || "");
+          setStyleDescription(profile.style_preferences || "");
+          setSelectedInterests(profile.style_interests || []);
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const toggleInterest = (interest: string) => {
     if (selectedInterests.includes(interest)) {
@@ -42,9 +71,37 @@ export const ClientProfileEditor = ({ onNavigate }: ClientProfileEditorProps) =>
     }
   };
 
-  const handleSave = () => {
-    // Would save to backend
-    onNavigate("my-profile");
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.error("Auth error:", authError);
+        setIsSaving(false);
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .upsert([
+          {
+            user_id: user.id,
+            name,
+            city,
+            style_preferences: styleDescription,
+            style_interests: selectedInterests,
+          },
+        ]);
+
+      if (!profileError && profile) {
+        onNavigate("my-profile");
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
