@@ -26,53 +26,93 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Always check for existing Supabase session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
+        if (sessionError) {
+          console.error("Session check error:", sessionError);
+          setIsLoggedIn(false);
+          setAccountType(null);
+          setUserId(null);
+          localStorage.removeItem('atelistry-auth');
+          return;
+        }
+
         if (session?.user) {
-          const { data: profile } = await supabase
+          // Session exists - fetch user profile
+          const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("account_type")
             .eq("user_id", session.user.id)
             .single();
 
-          setAccountType(profile?.account_type || "client");
-          setIsLoggedIn(true);
-          setUserId(session.user.id);
+          if (profileError) {
+            console.error("Profile fetch error:", profileError);
+            // Session exists but profile fetch failed - still mark as logged in
+            // but without account type (user can be redirected to complete profile)
+            setIsLoggedIn(true);
+            setAccountType(null);
+            setUserId(session.user.id);
+          } else {
+            // Session and profile exist - set full state
+            setIsLoggedIn(true);
+            setAccountType(profile?.account_type || null);
+            setUserId(session.user.id);
+            localStorage.setItem('atelistry-auth', 'true');
+          }
         } else {
+          // No session exists
           setIsLoggedIn(false);
           setAccountType(null);
           setUserId(null);
+          localStorage.removeItem('atelistry-auth');
         }
       } catch (err) {
-        console.error("Auth check error:", err);
+        console.error("Unexpected auth check error:", err);
         setIsLoggedIn(false);
         setAccountType(null);
         setUserId(null);
+        localStorage.removeItem('atelistry-auth');
       } finally {
+        // Always complete loading state
         setIsLoading(false);
       }
     };
 
-    // Check localStorage first for instant feedback
-    const hasSession = localStorage.getItem('atelistry-auth');
-    if (!hasSession) {
-      // No session in localStorage, instantly set to not loading
-      setIsLoading(false);
-      setIsLoggedIn(false);
-    } else {
-      // Session might exist, check with Supabase
-      checkAuth();
-    }
+    // Always check auth on application load - no shortcuts
+    checkAuth();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth state changes (sign in, sign out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change:", event);
+
       if (session?.user) {
-        checkAuth();
+        // User signed in or token refreshed - fetch profile
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("account_type")
+          .eq("user_id", session.user.id)
+          .single();
+
+        if (profileError) {
+          console.error("Profile fetch error on auth change:", profileError);
+          setIsLoggedIn(true);
+          setAccountType(null);
+          setUserId(session.user.id);
+        } else {
+          setIsLoggedIn(true);
+          setAccountType(profile?.account_type || null);
+          setUserId(session.user.id);
+          localStorage.setItem('atelistry-auth', 'true');
+        }
+        setIsLoading(false);
       } else {
+        // User signed out
         setIsLoggedIn(false);
         setAccountType(null);
         setUserId(null);
         setIsLoading(false);
+        localStorage.removeItem('atelistry-auth');
       }
     });
 

@@ -88,16 +88,16 @@ export const router = createBrowserRouter([
       {
         path: "edit-profile",
         element: (
-          <ProtectedRoute>
-            <ClientProfileEditor />
+          <ProtectedRoute requireStylist>
+            <StylistProfileEditor />
           </ProtectedRoute>
         ),
       },
       {
-        path: "edit-stylist-profile",
+        path: "client-edit-profile",
         element: (
-          <ProtectedRoute requireStylist>
-            <StylistProfileEditor />
+          <ProtectedRoute>
+            <ClientProfileEditor />
           </ProtectedRoute>
         ),
       },

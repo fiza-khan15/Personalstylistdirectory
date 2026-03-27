@@ -36,11 +36,44 @@ export const SignIn = () => {
         return;
       }
 
-      // Successfully signed in - redirect to my-profile
-      navigate("/my-profile");
+      if (!data.user) {
+        setError("Authentication failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch the user's account type from the profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("account_type")
+        .eq("user_id", data.user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Profile fetch error:", profileError);
+        setError("Could not load your profile. Please contact support.");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!profile || !profile.account_type) {
+        setError("Your profile is incomplete. Please contact support.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Store auth session in localStorage for instant feedback on reload
+      localStorage.setItem('atelistry-auth', 'true');
+
+      // Navigate based on account type from database
+      const destination = profile.account_type === "stylist" ? "/dashboard" : "/my-profile";
+      navigate(destination);
+
     } catch (err) {
       console.error("Unexpected error:", err);
       setError("An unexpected error occurred. Please try again.");
+    } finally {
+      // Always clear loading state
       setIsLoading(false);
     }
   };

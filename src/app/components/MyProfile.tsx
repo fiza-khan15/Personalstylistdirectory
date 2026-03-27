@@ -191,11 +191,14 @@ export const MyProfile = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.6 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
               className="border-t border-white/5 pt-12"
             >
               <button
-                onClick={() => supabase.auth.signOut().then(() => navigate("/login"))}
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  navigate("/");
+                }}
                 className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
               >
                 Sign Out

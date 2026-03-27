@@ -112,7 +112,7 @@ export const StylistDashboard = () => {
                 Active & Verified
               </p>
               <button 
-                onClick={() => navigate("/edit-stylist-profile")}
+                onClick={() => navigate("/edit-profile")}
                 className="mt-4 inline-block border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.4em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white"
               >
                 Edit Profile
@@ -127,7 +127,7 @@ export const StylistDashboard = () => {
                 {profileData?.accepting_clients ? "Accepting Clients" : "Not Accepting Clients"}
               </p>
               <button 
-                onClick={() => navigate("/edit-stylist-profile")}
+                onClick={() => navigate("/edit-profile")}
                 className="mt-4 inline-block border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.4em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white">
                 Update Status
               </button>
@@ -138,7 +138,10 @@ export const StylistDashboard = () => {
         {/* Logout */}
         <div className="mt-24 border-t border-white/5 pt-12">
           <button
-            onClick={() => supabase.auth.signOut()}
+            onClick={async () => {
+              await supabase.auth.signOut();
+              navigate("/");
+            }}
             className="text-[9px] font-medium tracking-[0.4em] text-neutral-600 uppercase transition-colors hover:text-white"
           >
             Sign Out

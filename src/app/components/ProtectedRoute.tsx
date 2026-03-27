@@ -11,11 +11,19 @@ export const ProtectedRoute = ({ children, requireStylist = false }: ProtectedRo
   const { isLoggedIn, accountType, isLoading } = useAuth();
   const location = useLocation();
 
-  // Show loading only if we're actually checking auth (has session in localStorage)
+  // Wait for auth check to complete before making any decisions
   if (isLoading) {
-    return null; // Return nothing instead of a loading screen for instant feel
+    // Show minimal loading state - do NOT redirect during loading
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[10px] font-medium tracking-[0.3em] text-neutral-600 uppercase animate-pulse">
+          Loading...
+        </div>
+      </div>
+    );
   }
 
+  // Auth check complete - now we can make routing decisions
   if (!isLoggedIn) {
     return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
