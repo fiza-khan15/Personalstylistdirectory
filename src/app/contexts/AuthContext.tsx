@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Session exists - fetch user profile
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
-            .select("account_type")
+            .select("user_type")
             .eq("user_id", session.user.id)
             .maybeSingle(); // Use maybeSingle() to handle missing profiles gracefully
 
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           } else {
             // Session and profile exist - set full state
             setIsLoggedIn(true);
-            setAccountType(profile?.account_type || null);
+            setAccountType(profile?.user_type || null);
             setUserId(session.user.id);
             localStorage.setItem('atelistry-auth', 'true');
           }
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // User signed in or token refreshed - fetch profile
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("account_type")
+          .select("user_type")
           .eq("user_id", session.user.id)
           .maybeSingle(); // Use maybeSingle() to handle missing profiles gracefully
 
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUserId(session.user.id);
         } else {
           setIsLoggedIn(true);
-          setAccountType(profile?.account_type || null);
+          setAccountType(profile?.user_type || null);
           setUserId(session.user.id);
           localStorage.setItem('atelistry-auth', 'true');
         }

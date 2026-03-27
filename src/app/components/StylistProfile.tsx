@@ -17,7 +17,7 @@ export const StylistProfile = () => {
           .from("profiles")
           .select("*")
           .eq("id", profileId)
-          .eq("account_type", "stylist")
+          .eq("user_type", "stylist")
           .single();
 
         if (error) {

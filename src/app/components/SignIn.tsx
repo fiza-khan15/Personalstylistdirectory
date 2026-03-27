@@ -75,7 +75,7 @@ export const SignIn = () => {
       console.log("Fetching user profile...");
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("account_type")
+        .select("user_type")
         .eq("user_id", data.user.id)
         .maybeSingle(); // Use maybeSingle() instead of single()
 
@@ -85,9 +85,9 @@ export const SignIn = () => {
         return; // Stop execution - finally block will clear loading
       }
 
-      // Determine accountType from profiles.account_type
-      const accountType = profile?.account_type || "client"; // Default to client if no profile
-      console.log("Profile fetched successfully, account type:", accountType);
+      // Determine accountType from profiles.user_type
+      const accountType = profile?.user_type || "client"; // Default to client if no profile
+      console.log("Profile fetched successfully, user type:", accountType);
 
       // Store auth session in localStorage for instant feedback on reload
       localStorage.setItem('atelistry-auth', 'true');
