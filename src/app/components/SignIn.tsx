@@ -36,9 +36,21 @@ export const SignIn = () => {
         return;
       }
 
-      // For demo purposes, determine account type based on email domain or metadata
-      // In production, you'd fetch this from user metadata or a separate table
-      const accountType = data.user?.email?.includes("stylist") ? "stylist" : "client";
+      // Fetch the actual account type from the profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("account_type")
+        .eq("user_id", data.user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Profile fetch error:", profileError);
+        setError("Could not load your profile. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      const accountType = profile?.account_type || "client";
       
       navigate(accountType === "stylist" ? "/dashboard" : "/my-profile");
     } catch (err) {

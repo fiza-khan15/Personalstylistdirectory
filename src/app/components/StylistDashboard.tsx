@@ -112,7 +112,7 @@ export const StylistDashboard = () => {
                 Active & Verified
               </p>
               <button 
-                onClick={() => navigate("/edit-profile")}
+                onClick={() => navigate("/edit-stylist-profile")}
                 className="mt-4 inline-block border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.4em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white"
               >
                 Edit Profile
@@ -127,7 +127,7 @@ export const StylistDashboard = () => {
                 {profileData?.accepting_clients ? "Accepting Clients" : "Not Accepting Clients"}
               </p>
               <button 
-                onClick={() => navigate("/edit-profile")}
+                onClick={() => navigate("/edit-stylist-profile")}
                 className="mt-4 inline-block border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.4em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white">
                 Update Status
               </button>
