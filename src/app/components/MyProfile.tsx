@@ -2,9 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
 
 export const MyProfile = () => {
   const navigate = useNavigate();
+  const { userId } = useAuth();
+
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -12,25 +15,27 @@ export const MyProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Get the currently logged-in user
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError || !user) {
-          setError("Unable to retrieve user information.");
+        // Wait until AuthContext provides a stable userId
+        if (!userId) {
           setIsLoading(false);
           return;
         }
 
-        // Fetch profile data from profiles table
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
+        console.log(
+          "Fetching profile using userId from AuthContext:",
+          userId,
+        );
+
+        const { data: profile, error: profileError } =
+          await supabase
+            .from("profiles")
+            .select("*")
+            .eq("user_id", userId)
+            .single();
 
         if (profileError) {
           console.error("Profile fetch error:", profileError);
-          setError(null); // No error shown, just no profile
+          setError(null);
           setProfileData(null);
         } else {
           setProfileData(profile);
@@ -44,20 +49,21 @@ export const MyProfile = () => {
     };
 
     fetchProfile();
-  }, []);
+  }, [userId]);
 
   const clientData = {
     name: profileData?.name || "Not yet provided",
     city: profileData?.city || "Not yet provided",
-    memberSince: profileData?.member_since || "Not yet provided",
+    memberSince:
+      profileData?.member_since || "Not yet provided",
     styleInterests: profileData?.style_interests || [],
-    styleDescription: profileData?.style_preferences || "Not yet provided",
+    styleDescription:
+      profileData?.style_preferences || "Not yet provided",
   };
 
   return (
     <div className="min-h-screen py-32 md:py-40">
       <div className="mx-auto max-w-5xl px-6 md:px-12">
-        
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -97,7 +103,7 @@ export const MyProfile = () => {
           </motion.div>
         )}
 
-        {/* Profile Content - Only show if we have data or are using fallback */}
+        {/* Profile Content */}
         {!isLoading && (
           <>
             {/* Profile Overview */}
@@ -112,13 +118,15 @@ export const MyProfile = () => {
                   Overview
                 </h2>
                 <button
-                  onClick={() => navigate("/client-edit-profile")}
+                  onClick={() =>
+                    navigate("/client-edit-profile")
+                  }
                   className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
                 >
                   Edit Profile
                 </button>
               </div>
-              
+
               <div className="grid grid-cols-1 gap-x-16 gap-y-12 md:grid-cols-3">
                 <div className="space-y-3">
                   <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
@@ -128,7 +136,7 @@ export const MyProfile = () => {
                     {clientData.name}
                   </p>
                 </div>
-                
+
                 <div className="space-y-3">
                   <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
                     City
@@ -137,7 +145,7 @@ export const MyProfile = () => {
                     {clientData.city}
                   </p>
                 </div>
-                
+
                 <div className="space-y-3">
                   <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
                     Member Since
@@ -154,14 +162,16 @@ export const MyProfile = () => {
                 </p>
                 {clientData.styleInterests.length > 0 ? (
                   <div className="flex flex-wrap gap-3">
-                    {clientData.styleInterests.map((interest) => (
-                      <span
-                        key={interest}
-                        className="border border-white/10 px-6 py-3 text-[9px] font-medium tracking-[0.3em] text-neutral-400 uppercase"
-                      >
-                        {interest}
-                      </span>
-                    ))}
+                    {clientData.styleInterests.map(
+                      (interest: string) => (
+                        <span
+                          key={interest}
+                          className="border border-white/10 px-6 py-3 text-[9px] font-medium tracking-[0.3em] text-neutral-400 uppercase"
+                        >
+                          {interest}
+                        </span>
+                      ),
+                    )}
                   </div>
                 ) : (
                   <p className="font-serif text-xl font-light text-neutral-500">
@@ -181,7 +191,7 @@ export const MyProfile = () => {
               <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
                 Style Preferences
               </h2>
-              
+
               <p className="max-w-2xl font-serif text-lg font-light leading-relaxed text-neutral-300">
                 {clientData.styleDescription}
               </p>
