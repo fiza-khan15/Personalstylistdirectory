@@ -25,7 +25,7 @@ export const StylistDashboard = () => {
           .from("profiles")
           .select("*")
           .eq("user_id", userId)
-          .single();
+          .maybeSingle();
 
         if (!profileError && profile) {
           setProfileData(profile);
@@ -35,7 +35,7 @@ export const StylistDashboard = () => {
 
         // Example: fetch related stats (safe pattern)
         const { count, error: countError } = await supabase
-          .from("access_request")
+          .from("access_requests")
           .select("*", { count: "exact", head: true })
           .eq("type", "client");
 

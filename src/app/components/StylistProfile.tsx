@@ -18,7 +18,7 @@ export const StylistProfile = () => {
           .select("*")
           .eq("id", profileId)
           .eq("user_type", "stylist")
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error("Profile fetch error:", error);

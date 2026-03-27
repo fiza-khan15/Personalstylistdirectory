@@ -47,7 +47,7 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
           .from("profiles")
           .select("*")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           console.error("Profile fetch error:", profileError);
@@ -122,7 +122,7 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
           accepting_clients: formData.acceptingClients,
         })
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (updateError) {
         console.error("Profile update error:", updateError);

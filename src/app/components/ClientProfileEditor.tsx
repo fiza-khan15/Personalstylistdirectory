@@ -45,7 +45,7 @@ export const ClientProfileEditor = () => {
           .from("profiles")
           .select("*")
           .eq("user_id", userId)
-          .single();
+          .maybeSingle();
 
         if (!profileError && profile) {
           setName(profile.name || "");
