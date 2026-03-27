@@ -1,51 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
-import { Search, Menu } from "lucide-react";
+import React from "react";
+import { Link, useLocation } from "react-router";
+import { Menu } from "lucide-react";
 import { Inquiries } from "./Inquiries";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
 
 export const Navbar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accountType, setAccountType] = useState<"client" | "stylist" | null>(null);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("account_type")
-            .eq("user_id", user.id)
-            .single();
-
-          setAccountType(profile?.account_type || "client");
-          setIsLoggedIn(true);
-        }
-      } else {
-        setIsLoggedIn(false);
-      }
-    };
-
-    checkAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        checkAuth();
-      } else {
-        setIsLoggedIn(false);
-        setAccountType(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { isLoggedIn, accountType } = useAuth();
 
   const currentPage = location.pathname.split("/")[1] || "home";
 

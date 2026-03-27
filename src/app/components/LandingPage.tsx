@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "motion/react";
 import { Hero } from "./Hero";
 import { About } from "./About";
 import { Inquiries } from "./Inquiries";
@@ -8,13 +7,7 @@ const FeaturedInsight = () => {
   return (
     <section className="bg-neutral-950 py-60 border-y border-white/5">
       <div className="mx-auto max-w-7xl px-6 md:px-12 text-center">
-        <motion.div
-           initial={{ opacity: 0 }}
-           whileInView={{ opacity: 1 }}
-           transition={{ duration: 1.5 }}
-           viewport={{ once: true }}
-           className="space-y-12"
-        >
+        <div className="space-y-12">
           <span className="text-[10px] font-bold tracking-[0.6em] text-red-900 uppercase">THE JOURNAL</span>
           <h2 className="font-serif text-5xl md:text-8xl font-light tracking-tighter text-white leading-none">
             The Art of <br />
@@ -27,30 +20,19 @@ const FeaturedInsight = () => {
           <button className="text-[10px] font-medium tracking-[0.4em] text-white/40 uppercase hover:text-white transition-all border-b border-white/5 pb-2">
             Read Entry
           </button>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
 };
 
 export const LandingPage = () => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    transition={{ duration: 0.8 }}
-  >
+  <div>
     <Hero />
     
     {/* Quote Section (The Manifesto) */}
     <section className="mx-auto max-w-5xl py-60 px-6 text-center">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.5 }}
-        viewport={{ once: true }}
-        className="space-y-10"
-      >
+      <div className="space-y-10">
         <p className="font-serif text-3xl md:text-5xl italic leading-tight text-neutral-300 font-light">
           "Style is a silent language, spoken through the curation of identity."
         </p>
@@ -61,7 +43,7 @@ export const LandingPage = () => (
         >
           The Atelistry Philosophy
         </p>
-      </motion.div>
+      </div>
     </section>
 
     <About />
@@ -93,5 +75,5 @@ export const LandingPage = () => (
         </form>
       </div>
     </section>
-  </motion.div>
+  </div>
 );
