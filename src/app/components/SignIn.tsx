@@ -36,23 +36,8 @@ export const SignIn = () => {
         return;
       }
 
-      // Fetch the actual account type from the profiles table
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("account_type")
-        .eq("user_id", data.user.id)
-        .single();
-
-      if (profileError) {
-        console.error("Profile fetch error:", profileError);
-        setError("Could not load your profile. Please try again.");
-        setIsLoading(false);
-        return;
-      }
-
-      const accountType = profile?.account_type || "client";
-      
-      navigate(accountType === "stylist" ? "/dashboard" : "/my-profile");
+      // Successfully signed in - redirect to my-profile
+      navigate("/my-profile");
     } catch (err) {
       console.error("Unexpected error:", err);
       setError("An unexpected error occurred. Please try again.");
