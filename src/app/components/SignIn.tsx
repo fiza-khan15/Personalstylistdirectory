@@ -21,59 +21,67 @@ export const SignIn = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Prevent double submissions
+    if (isLoading) {
+      return;
+    }
+
+    // Step 1: Set loading state and clear previous errors
     setError("");
     setIsLoading(true);
 
     try {
+      // Step 2: Call Supabase authentication
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
+      // Step 3: Handle authentication failure
       if (signInError) {
         setError("Invalid credentials. Please try again.");
-        setIsLoading(false);
-        return;
+        return; // Stop execution - finally block will clear loading
       }
 
       if (!data.user) {
         setError("Authentication failed. Please try again.");
-        setIsLoading(false);
-        return;
+        return; // Stop execution - finally block will clear loading
       }
 
-      // Fetch the user's account type from the profiles table
+      // Step 4: Fetch user profile from database using maybeSingle()
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("account_type")
         .eq("user_id", data.user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle() instead of single()
 
       if (profileError) {
         console.error("Profile fetch error:", profileError);
         setError("Could not load your profile. Please contact support.");
-        setIsLoading(false);
-        return;
+        return; // Stop execution - finally block will clear loading
       }
 
-      if (!profile || !profile.account_type) {
-        setError("Your profile is incomplete. Please contact support.");
-        setIsLoading(false);
-        return;
-      }
+      // Step 5: Determine navigation based on account_type
+      // Always use database value - do not guess from email
+      const accountType = profile?.account_type || "client"; // Default to client if no profile
 
       // Store auth session in localStorage for instant feedback on reload
       localStorage.setItem('atelistry-auth', 'true');
 
       // Navigate based on account type from database
-      const destination = profile.account_type === "stylist" ? "/dashboard" : "/my-profile";
-      navigate(destination);
+      if (accountType === "stylist") {
+        navigate("/dashboard");
+      } else {
+        navigate("/my-profile");
+      }
 
     } catch (err) {
-      console.error("Unexpected error:", err);
+      console.error("Unexpected error during sign in:", err);
       setError("An unexpected error occurred. Please try again.");
     } finally {
-      // Always clear loading state
+      // Step 6: Always clear loading state
+      // This runs in ALL cases: success, error, exception, network failure
       setIsLoading(false);
     }
   };
