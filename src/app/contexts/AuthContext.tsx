@@ -119,7 +119,15 @@ export const AuthProvider = ({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event) => {
-      console.log("Auth state change:", event);
+      console.log(
+        "Auth state change:",
+        event,
+        new Date().toISOString(),
+      );
+
+      if (event === "SIGNED_OUT") {
+        console.trace("SIGNED_OUT triggered from here");
+      }
 
       if (
         event === "SIGNED_IN" ||
@@ -158,7 +166,13 @@ export const AuthProvider = ({
 
   return (
     <AuthContext.Provider
-      value={{ isLoggedIn, accountType, isLoading, userId, signOut }}
+      value={{
+        isLoggedIn,
+        accountType,
+        isLoading,
+        userId,
+        signOut,
+      }}
     >
       {children}
     </AuthContext.Provider>

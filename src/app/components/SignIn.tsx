@@ -5,27 +5,25 @@ import { useAuth } from "../contexts/AuthContext";
 
 export const SignIn = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, accountType, isLoading: isCheckingSession } = useAuth();
+  const { isLoggedIn, isLoading, accountType } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // SINGLE SOURCE OF TRUTH: App.tsx authentication state handles navigation
   // Watch auth state and navigate based on AuthContext updates
   useEffect(() => {
-    // Only navigate if logged in, session check complete, and account type exists
-    if (isLoggedIn && !isCheckingSession && accountType) {
-      // Navigate based on account type from AuthContext (single decision point)
+    if (!isLoading && isLoggedIn) {
       if (accountType === "stylist") {
-        navigate("/dashboard", { replace: true });
-      } else if (accountType === "client") {
-        navigate("/my-profile", { replace: true });
+        navigate("/dashboard");
+      } else {
+        navigate("/my-profile");
       }
     }
-  }, [isLoggedIn, accountType, isCheckingSession, navigate]);
+  }, [isLoggedIn, isLoading, accountType, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -39,13 +37,13 @@ export const SignIn = () => {
     e.preventDefault();
 
     // Prevent double submissions
-    if (isLoading) {
+    if (isSubmitting) {
       return;
     }
 
     // Step 1: Set loading state and clear previous errors
     setError("");
-    setIsLoading(true);
+    setIsSubmitting(true);
     console.log("Starting sign in process...");
 
     try {
@@ -105,7 +103,7 @@ export const SignIn = () => {
       // Step 5: Always clear loading state
       // This runs in ALL cases: success, error, exception, network failure
       console.log("Clearing loading state");
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -176,11 +174,11 @@ export const SignIn = () => {
           <div className="flex justify-center pt-8">
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="group relative overflow-hidden border border-white/10 px-16 py-5 text-[10px] font-bold tracking-[0.4em] text-white uppercase transition-all hover:border-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="relative z-10">
-                {isLoading ? "Signing In..." : "Sign In"}
+                {isSubmitting ? "Signing In..." : "Sign In"}
               </span>
               <span className="absolute inset-0 bg-red-900/10 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500" />
             </button>
