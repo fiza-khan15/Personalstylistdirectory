@@ -1,15 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
 
 export const SignIn = () => {
   const navigate = useNavigate();
+  const { isLoggedIn, accountType, isLoading: isCheckingSession } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Single source of truth for navigation - watch auth state
+  useEffect(() => {
+    // Only navigate if we're logged in and not in the middle of checking session
+    if (isLoggedIn && !isCheckingSession && accountType) {
+      // Navigate based on account type from AuthContext
+      if (accountType === "stylist") {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/my-profile", { replace: true });
+      }
+    }
+  }, [isLoggedIn, accountType, isCheckingSession, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -62,25 +77,18 @@ export const SignIn = () => {
         return; // Stop execution - finally block will clear loading
       }
 
-      // Step 5: Determine navigation based on account_type
-      // Always use database value - do not guess from email
-      const accountType = profile?.account_type || "client"; // Default to client if no profile
-
       // Store auth session in localStorage for instant feedback on reload
       localStorage.setItem('atelistry-auth', 'true');
 
-      // Navigate based on account type from database
-      if (accountType === "stylist") {
-        navigate("/dashboard");
-      } else {
-        navigate("/my-profile");
-      }
+      // DO NOT NAVIGATE HERE - let the useEffect above handle navigation
+      // based on AuthContext state update (via onAuthStateChange)
+      // The AuthContext will update automatically and trigger navigation
 
     } catch (err) {
       console.error("Unexpected error during sign in:", err);
       setError("An unexpected error occurred. Please try again.");
     } finally {
-      // Step 6: Always clear loading state
+      // Step 5: Always clear loading state
       // This runs in ALL cases: success, error, exception, network failure
       setIsLoading(false);
     }
