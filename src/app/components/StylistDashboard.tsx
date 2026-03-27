@@ -1,152 +1,106 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
 
 export const StylistDashboard = () => {
-  const navigate = useNavigate();
+  const { userId } = useAuth();
+
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
-  
-  // Mock data - would come from backend
-  const analytics = {
-    profileViews: 342,
-    introductions: 23,
-  };
+  const [clientsCount, setClientsCount] = useState(0);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchDashboardData = async () => {
       try {
-        // Get the currently logged-in user
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError || !user) {
-          console.error("Auth error:", authError);
+        if (!userId) {
           setIsLoading(false);
           return;
         }
 
-        // Fetch profile data from profiles table
+        console.log("Fetching stylist dashboard data using userId:", userId);
+
+        // Fetch stylist profile
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .single();
 
-        if (profileError) {
-          console.error("Profile fetch error:", profileError);
-          setProfileData(null);
-        } else {
+        if (!profileError && profile) {
           setProfileData(profile);
+        } else if (profileError) {
+          console.error("Profile fetch error:", profileError);
+        }
+
+        // Example: fetch related stats (safe pattern)
+        const { count, error: countError } = await supabase
+          .from("access_request")
+          .select("*", { count: "exact", head: true })
+          .eq("type", "client");
+
+        if (!countError && typeof count === "number") {
+          setClientsCount(count);
         }
       } catch (err) {
-        console.error("Unexpected error:", err);
+        console.error("Unexpected dashboard error:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProfile();
-  }, []);
+    fetchDashboardData();
+  }, [userId]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-[10px] tracking-[0.3em] text-neutral-600 uppercase">
+          Loading dashboard...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-32 md:py-40">
-      <div className="mx-auto max-w-7xl px-6 md:px-12">
-        
-        {/* Header */}
-        <div className="mb-24 space-y-2">
+      <div className="mx-auto max-w-5xl px-6 md:px-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="mb-32 space-y-3"
+        >
           <h1 className="font-serif text-5xl md:text-7xl font-light tracking-tight text-white">
-            Stylist Dashboard
+            Dashboard
           </h1>
-          <p className="text-[10px] font-medium tracking-[0.4em] text-neutral-500 uppercase">
-            {profileData?.name || "Not yet provided"}
-          </p>
-        </div>
+          <div className="h-px w-12 bg-red-900/40" />
+        </motion.div>
 
-        {/* Analytics Cards */}
-        <div className="mb-32 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="group border border-white/5 bg-neutral-900/30 p-10 transition-all duration-500 hover:border-white/10">
-            <div className="space-y-6">
-              <p className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-                Profile Views
-              </p>
-              <p className="font-serif text-5xl font-light text-white">
-                {analytics.profileViews}
-              </p>
-              <p className="text-[10px] tracking-[0.2em] text-neutral-600 uppercase">
-                Last 30 Days
-              </p>
-            </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.2 }}
+          className="grid grid-cols-1 gap-12 md:grid-cols-2"
+        >
+          <div className="border border-white/5 p-10">
+            <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase mb-4">
+              Stylist Name
+            </p>
+            <p className="font-serif text-2xl font-light text-white">
+              {profileData?.name || "Not yet provided"}
+            </p>
           </div>
 
-          <button
-            onClick={() => navigate("/stylist-introductions")}
-            className="group border border-white/5 bg-neutral-900/30 p-10 text-left transition-all duration-500 hover:border-white/10 hover:bg-neutral-900/40"
-          >
-            <div className="space-y-6">
-              <p className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-                Introductions
-              </p>
-              <p className="font-serif text-5xl font-light text-white">
-                {analytics.introductions}
-              </p>
-              <p className="text-[10px] tracking-[0.2em] text-neutral-600 uppercase group-hover:text-neutral-500 transition-colors">
-                This Month
-              </p>
-            </div>
-          </button>
-        </div>
-
-        {/* Profile Management */}
-        <div className="space-y-12 border-t border-white/5 pt-16">
-          <h2 className="font-serif text-3xl font-light tracking-tight text-white">
-            Profile Management
-          </h2>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="space-y-6 border border-white/5 bg-neutral-900/20 p-10">
-              <p className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-                Profile Status
-              </p>
-              <p className="font-serif text-2xl font-light text-white">
-                Active & Verified
-              </p>
-              <button 
-                onClick={() => navigate("/edit-profile")}
-                className="mt-4 inline-block border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.4em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white"
-              >
-                Edit Profile
-              </button>
-            </div>
-
-            <div className="space-y-6 border border-white/5 bg-neutral-900/20 p-10">
-              <p className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-                Availability
-              </p>
-              <p className="font-serif text-2xl font-light text-white">
-                {profileData?.accepting_clients ? "Accepting Clients" : "Not Accepting Clients"}
-              </p>
-              <button 
-                onClick={() => navigate("/edit-profile")}
-                className="mt-4 inline-block border-b border-white/10 pb-1 text-[9px] font-medium tracking-[0.4em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white">
-                Update Status
-              </button>
-            </div>
+          <div className="border border-white/5 p-10">
+            <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase mb-4">
+              Client Requests
+            </p>
+            <p className="font-serif text-2xl font-light text-white">
+              {clientsCount}
+            </p>
           </div>
-        </div>
-
-        {/* Logout */}
-        <div className="mt-24 border-t border-white/5 pt-12">
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              navigate("/");
-            }}
-            className="text-[9px] font-medium tracking-[0.4em] text-neutral-600 uppercase transition-colors hover:text-white"
-          >
-            Sign Out
-          </button>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

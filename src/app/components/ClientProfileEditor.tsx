@@ -2,9 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
 
 export const ClientProfileEditor = () => {
   const navigate = useNavigate();
+  const { userId } = useAuth();
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [name, setName] = useState("");
@@ -31,18 +34,17 @@ export const ClientProfileEditor = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError || !user) {
-          console.error("Auth error:", authError);
+        if (!userId) {
           setIsLoading(false);
           return;
         }
 
+        console.log("Fetching client profile using userId:", userId);
+
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .single();
 
         if (!profileError && profile) {
@@ -50,6 +52,8 @@ export const ClientProfileEditor = () => {
           setCity(profile.city || "");
           setStyleDescription(profile.style_preferences || "");
           setSelectedInterests(profile.style_interests || []);
+        } else if (profileError) {
+          console.error("Profile fetch error:", profileError);
         }
       } catch (err) {
         console.error("Unexpected error:", err);
@@ -59,7 +63,7 @@ export const ClientProfileEditor = () => {
     };
 
     fetchProfile();
-  }, []);
+  }, [userId]);
 
   const toggleInterest = (interest: string) => {
     if (selectedInterests.includes(interest)) {
@@ -71,19 +75,20 @@ export const ClientProfileEditor = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
+
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
-        console.error("Auth error:", authError);
+      if (!userId) {
+        console.error("No userId available");
         setIsSaving(false);
         return;
       }
 
+      console.log("Saving profile for userId:", userId);
+
       const { error: profileError } = await supabase
         .from("profiles")
         .upsert({
-          user_id: user.id,
+          user_id: userId,
           name,
           city,
           style_preferences: styleDescription,
@@ -105,8 +110,6 @@ export const ClientProfileEditor = () => {
   return (
     <div className="min-h-screen py-32 md:py-40">
       <div className="mx-auto max-w-3xl px-6 md:px-12">
-        
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -119,7 +122,6 @@ export const ClientProfileEditor = () => {
           <div className="h-px w-12 bg-red-900/40" />
         </motion.div>
 
-        {/* Name */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -139,7 +141,6 @@ export const ClientProfileEditor = () => {
           </label>
         </motion.div>
 
-        {/* City */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -159,7 +160,6 @@ export const ClientProfileEditor = () => {
           </label>
         </motion.div>
 
-        {/* Style Preferences */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -177,27 +177,14 @@ export const ClientProfileEditor = () => {
               placeholder="Describe your style preferences and aesthetic..."
             />
           </label>
-          <p className="text-[9px] tracking-[0.2em] text-neutral-600 uppercase">
-            Share your vision for your personal style and wardrobe goals.
-          </p>
         </motion.div>
 
-        {/* Style Interests */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.5 }}
           className="mb-32 space-y-8 border-t border-white/5 pt-20"
         >
-          <div className="space-y-4">
-            <span className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-              Style Interests
-            </span>
-            <p className="text-[9px] tracking-[0.2em] text-neutral-600 uppercase">
-              Select all that resonate with your aesthetic.
-            </p>
-          </div>
-          
           <div className="flex flex-wrap gap-3">
             {availableInterests.map((interest) => (
               <button
@@ -215,7 +202,6 @@ export const ClientProfileEditor = () => {
           </div>
         </motion.div>
 
-        {/* Actions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -225,11 +211,12 @@ export const ClientProfileEditor = () => {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
             <button
               onClick={handleSave}
-              className="group border border-white bg-white px-12 py-5 text-[9px] font-bold tracking-[0.4em] text-neutral-950 uppercase transition-all hover:bg-transparent hover:text-white"
+              disabled={isSaving}
+              className="group border border-white bg-white px-12 py-5 text-[9px] font-bold tracking-[0.4em] text-neutral-950 uppercase transition-all hover:bg-transparent hover:text-white disabled:opacity-50"
             >
-              Save Changes
+              {isSaving ? "Saving..." : "Save Changes"}
             </button>
-            
+
             <button
               onClick={() => navigate("/my-profile")}
               className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
@@ -237,21 +224,6 @@ export const ClientProfileEditor = () => {
               Cancel
             </button>
           </div>
-        </motion.div>
-
-        {/* Back Navigation */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.7 }}
-          className="mt-24 border-t border-white/5 pt-12"
-        >
-          <button
-            onClick={() => navigate("/my-profile")}
-            className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
-          >
-            ← Back to Profile
-          </button>
         </motion.div>
       </div>
     </div>
