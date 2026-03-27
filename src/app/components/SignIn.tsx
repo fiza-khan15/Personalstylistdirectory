@@ -13,14 +13,15 @@ export const SignIn = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Single source of truth for navigation - watch auth state
+  // SINGLE SOURCE OF TRUTH: App.tsx authentication state handles navigation
+  // Watch auth state and navigate based on AuthContext updates
   useEffect(() => {
-    // Only navigate if we're logged in and not in the middle of checking session
+    // Only navigate if logged in, session check complete, and account type exists
     if (isLoggedIn && !isCheckingSession && accountType) {
-      // Navigate based on account type from AuthContext
+      // Navigate based on account type from AuthContext (single decision point)
       if (accountType === "stylist") {
         navigate("/dashboard", { replace: true });
-      } else {
+      } else if (accountType === "client") {
         navigate("/my-profile", { replace: true });
       }
     }
@@ -47,7 +48,7 @@ export const SignIn = () => {
     setIsLoading(true);
 
     try {
-      // Step 2: Call Supabase authentication
+      // Step 2: Authenticate using signInWithPassword
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -77,12 +78,16 @@ export const SignIn = () => {
         return; // Stop execution - finally block will clear loading
       }
 
+      // Determine accountType from profiles.account_type
+      const accountType = profile?.account_type || "client"; // Default to client if no profile
+
       // Store auth session in localStorage for instant feedback on reload
       localStorage.setItem('atelistry-auth', 'true');
 
-      // DO NOT NAVIGATE HERE - let the useEffect above handle navigation
-      // based on AuthContext state update (via onAuthStateChange)
-      // The AuthContext will update automatically and trigger navigation
+      // DO NOT NAVIGATE HERE ❌
+      // Navigation is handled by useEffect above watching AuthContext state
+      // The onAuthStateChange listener in AuthContext will update state
+      // which triggers the useEffect to navigate (single source of truth)
 
     } catch (err) {
       console.error("Unexpected error during sign in:", err);
