@@ -1,4 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { supabase } from "@/lib/supabase";
 
 interface AuthContextType {
@@ -17,102 +22,119 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accountType, setAccountType] = useState<"client" | "stylist" | null>(null);
+  const [accountType, setAccountType] = useState<
+    "client" | "stylist" | null
+  >(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    /**
+     * SAFE PROFILE FETCH FUNCTION
+     * Always confirms session before querying database
+     */
+    const fetchProfileSafely = async () => {
       try {
-        // Always check for existing Supabase session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
         if (sessionError) {
           console.error("Session check error:", sessionError);
           setIsLoggedIn(false);
           setAccountType(null);
           setUserId(null);
-          localStorage.removeItem('atelistry-auth');
+          localStorage.removeItem("atelistry-auth");
           return;
         }
 
-        if (session?.user) {
-          // Session exists - fetch user profile
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("user_type")
-            .eq("user_id", session.user.id)
-            .maybeSingle(); // Use maybeSingle() to handle missing profiles gracefully
-
-          if (profileError) {
-            console.error("Profile fetch error:", profileError);
-            // Session exists but profile fetch failed - still mark as logged in
-            // but without account type (user can be redirected to complete profile)
-            setIsLoggedIn(true);
-            setAccountType(null);
-            setUserId(session.user.id);
-          } else {
-            // Session and profile exist - set full state
-            setIsLoggedIn(true);
-            setAccountType(profile?.user_type || null);
-            setUserId(session.user.id);
-            localStorage.setItem('atelistry-auth', 'true');
-          }
-        } else {
-          // No session exists
+        if (!session?.user) {
           setIsLoggedIn(false);
           setAccountType(null);
           setUserId(null);
-          localStorage.removeItem('atelistry-auth');
+          localStorage.removeItem("atelistry-auth");
+          return;
+        }
+
+        const userId = session.user.id;
+
+        console.log(
+          "Fetching user profile after stable session...",
+        );
+
+        const { data: profile, error: profileError } =
+          await supabase
+            .from("profiles")
+            .select("user_type")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+
+          // Still logged in even if profile fails
+          setIsLoggedIn(true);
+          setAccountType(null);
+          setUserId(userId);
+        } else {
+          console.log(
+            "Profile fetched successfully, user type:",
+            profile?.user_type,
+          );
+
+          setIsLoggedIn(true);
+          setAccountType(profile?.user_type || null);
+          setUserId(userId);
+          localStorage.setItem("atelistry-auth", "true");
         }
       } catch (err) {
         console.error("Unexpected auth check error:", err);
         setIsLoggedIn(false);
         setAccountType(null);
         setUserId(null);
-        localStorage.removeItem('atelistry-auth');
+        localStorage.removeItem("atelistry-auth");
       } finally {
-        // Always complete loading state
         setIsLoading(false);
       }
     };
 
-    // Always check auth on application load - no shortcuts
-    checkAuth();
+    /**
+     * INITIAL AUTH CHECK ON APP LOAD
+     */
+    fetchProfileSafely();
 
-    // Listen for auth state changes (sign in, sign out, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    /**
+     * AUTH STATE CHANGE LISTENER
+     * Handles login, logout, and token refresh safely
+     */
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event) => {
       console.log("Auth state change:", event);
 
-      if (session?.user) {
-        // User signed in or token refreshed - fetch profile
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("user_type")
-          .eq("user_id", session.user.id)
-          .maybeSingle(); // Use maybeSingle() to handle missing profiles gracefully
+      if (
+        event === "SIGNED_IN" ||
+        event === "TOKEN_REFRESHED"
+      ) {
+        // Wait briefly to allow session to stabilize
+        setTimeout(async () => {
+          await fetchProfileSafely();
+        }, 100);
+      }
 
-        if (profileError) {
-          console.error("Profile fetch error on auth change:", profileError);
-          setIsLoggedIn(true);
-          setAccountType(null);
-          setUserId(session.user.id);
-        } else {
-          setIsLoggedIn(true);
-          setAccountType(profile?.user_type || null);
-          setUserId(session.user.id);
-          localStorage.setItem('atelistry-auth', 'true');
-        }
-        setIsLoading(false);
-      } else {
-        // User signed out
+      if (event === "SIGNED_OUT") {
         setIsLoggedIn(false);
         setAccountType(null);
         setUserId(null);
         setIsLoading(false);
-        localStorage.removeItem('atelistry-auth');
+        localStorage.removeItem("atelistry-auth");
       }
     });
 
@@ -120,7 +142,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, accountType, isLoading, userId }}>
+    <AuthContext.Provider
+      value={{ isLoggedIn, accountType, isLoading, userId }}
+    >
       {children}
     </AuthContext.Provider>
   );
