@@ -46,9 +46,11 @@ export const SignIn = () => {
     // Step 1: Set loading state and clear previous errors
     setError("");
     setIsLoading(true);
+    console.log("Starting sign in process...");
 
     try {
       // Step 2: Authenticate using signInWithPassword
+      console.log("Authenticating with email:", formData.email);
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -56,16 +58,21 @@ export const SignIn = () => {
 
       // Step 3: Handle authentication failure
       if (signInError) {
+        console.error("Sign in error:", signInError);
         setError("Invalid credentials. Please try again.");
         return; // Stop execution - finally block will clear loading
       }
 
       if (!data.user) {
+        console.error("No user data returned");
         setError("Authentication failed. Please try again.");
         return; // Stop execution - finally block will clear loading
       }
 
+      console.log("Authentication successful, user ID:", data.user.id);
+
       // Step 4: Fetch user profile from database using maybeSingle()
+      console.log("Fetching user profile...");
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("account_type")
@@ -80,10 +87,12 @@ export const SignIn = () => {
 
       // Determine accountType from profiles.account_type
       const accountType = profile?.account_type || "client"; // Default to client if no profile
+      console.log("Profile fetched successfully, account type:", accountType);
 
       // Store auth session in localStorage for instant feedback on reload
       localStorage.setItem('atelistry-auth', 'true');
 
+      console.log("Sign in complete, waiting for AuthContext to update and trigger navigation...");
       // DO NOT NAVIGATE HERE ❌
       // Navigation is handled by useEffect above watching AuthContext state
       // The onAuthStateChange listener in AuthContext will update state
@@ -95,6 +104,7 @@ export const SignIn = () => {
     } finally {
       // Step 5: Always clear loading state
       // This runs in ALL cases: success, error, exception, network failure
+      console.log("Clearing loading state");
       setIsLoading(false);
     }
   };

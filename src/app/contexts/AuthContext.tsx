@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             .from("profiles")
             .select("account_type")
             .eq("user_id", session.user.id)
-            .single();
+            .maybeSingle(); // Use maybeSingle() to handle missing profiles gracefully
 
           if (profileError) {
             console.error("Profile fetch error:", profileError);
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .from("profiles")
           .select("account_type")
           .eq("user_id", session.user.id)
-          .single();
+          .maybeSingle(); // Use maybeSingle() to handle missing profiles gracefully
 
         if (profileError) {
           console.error("Profile fetch error on auth change:", profileError);
