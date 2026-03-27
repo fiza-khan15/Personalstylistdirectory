@@ -11,6 +11,7 @@ interface AuthContextType {
   accountType: "client" | "stylist" | null;
   isLoading: boolean;
   userId: string | null;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   accountType: null,
   isLoading: true,
   userId: null,
+  signOut: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -141,9 +143,22 @@ export const AuthProvider = ({
     return () => subscription.unsubscribe();
   }, []);
 
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error signing out:", error);
+    } else {
+      setIsLoggedIn(false);
+      setAccountType(null);
+      setUserId(null);
+      setIsLoading(false);
+      localStorage.removeItem("atelistry-auth");
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ isLoggedIn, accountType, isLoading, userId }}
+      value={{ isLoggedIn, accountType, isLoading, userId, signOut }}
     >
       {children}
     </AuthContext.Provider>

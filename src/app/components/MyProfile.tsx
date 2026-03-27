@@ -6,7 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 export const MyProfile = () => {
   const navigate = useNavigate();
-  const { userId } = useAuth();
+  const { userId, signOut } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
@@ -206,7 +206,7 @@ export const MyProfile = () => {
             >
               <button
                 onClick={async () => {
-                  await supabase.auth.signOut();
+                  await signOut();
                   navigate("/");
                 }}
                 className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"

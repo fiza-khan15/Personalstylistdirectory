@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Upload, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
 
 interface StylistProfileEditorProps {
   onNavigate: (page: string) => void;
 }
 
 export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) => {
+  const { userId } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
@@ -33,11 +35,8 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Get the currently logged-in user
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError || !user) {
-          console.error("Auth error:", authError);
+        if (!userId) {
+          console.error("User ID not found");
           setIsLoading(false);
           return;
         }
@@ -46,7 +45,7 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .maybeSingle();
 
         if (profileError) {
@@ -80,7 +79,7 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
     };
 
     fetchProfile();
-  }, []);
+  }, [userId]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -99,11 +98,8 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Get the currently logged-in user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
-        console.error("Auth error:", authError);
+      if (!userId) {
+        console.error("User ID not found");
         setIsSaving(false);
         return;
       }
@@ -121,7 +117,7 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
           website: formData.website,
           accepting_clients: formData.acceptingClients,
         })
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .maybeSingle();
 
       if (updateError) {
