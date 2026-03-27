@@ -56,7 +56,7 @@ export const About = () => {
             </p>
             <span 
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              className="text-[10px] font-bold tracking-[0.6em] text-red-900 uppercase cursor-pointer hover:opacity-70 transition-opacity"
+              className="text-[10px] font-bold tracking-[0.6em] text-[#8B0000] uppercase cursor-pointer hover:text-red-900 transition-all"
             >
               The Atelistry Manifesto
             </span>
@@ -128,7 +128,7 @@ export const About = () => {
                For private introductions, bespoke requests, and tailored guidance.
             </p>
             <Inquiries>
-              <button className="text-[10px] font-bold tracking-[0.6em] text-white uppercase hover:text-red-900 transition-all border-b border-white/10 pb-2">
+              <button className="text-[10px] font-bold tracking-[0.6em] text-[#8B0000] uppercase hover:text-red-900 transition-all border-b border-[#8B0000]/30 pb-2">
                  INQUIRIES
               </button>
             </Inquiries>

@@ -47,7 +47,7 @@ export const Hero = () => {
             className="relative aspect-[4/5] overflow-hidden order-1 lg:order-2 bg-neutral-900"
           >
             <ImageWithFallback
-              src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop"
+              src="https://images.unsplash.com/photo-1762605135012-56a59a059e60?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBmYXNoaW9uJTIwZWRpdG9yaWFsJTIwbWluaW1hbGlzdHxlbnwxfHx8fDE3NzQ1MTk3Mjh8MA&ixlib=rb-4.1.0&q=80&w=1080"
               alt="Minimal luxury fashion"
               className="h-full w-full object-cover grayscale transition-transform duration-[3s] hover:scale-105"
             />

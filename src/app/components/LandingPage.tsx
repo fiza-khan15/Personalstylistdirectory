@@ -39,7 +39,7 @@ export const LandingPage = () => (
         <div className="mx-auto h-[1px] w-12 bg-neutral-800" />
         <p 
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="text-[9px] font-bold tracking-[0.6em] text-red-900 uppercase cursor-pointer hover:opacity-70 transition-opacity"
+          className="text-[9px] font-bold tracking-[0.6em] text-[#8B0000] uppercase cursor-pointer hover:text-red-900 transition-all"
         >
           The Atelistry Philosophy
         </p>
