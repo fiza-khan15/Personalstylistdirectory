@@ -13,15 +13,25 @@ export const SignIn = () => {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // SINGLE SOURCE OF TRUTH: App.tsx authentication state handles navigation
-  // Watch auth state and navigate based on AuthContext updates
+  /**
+   * NAVIGATION HANDLER
+   * Only navigates when:
+   * 1. Auth context has finished loading (!isLoading)
+   * 2. User is confirmed logged in (isLoggedIn)
+   * 3. Account type is known
+   */
   useEffect(() => {
-    if (!isLoading && isLoggedIn) {
-      if (accountType === "stylist") {
-        navigate("/dashboard");
-      } else {
-        navigate("/my-profile");
-      }
+    if (!isLoading && isLoggedIn && accountType) {
+      console.log("✅ Auth confirmed, navigating to:", accountType === "stylist" ? "/dashboard" : "/my-profile");
+      
+      // Use setTimeout to ensure navigation happens after auth is fully settled
+      setTimeout(() => {
+        if (accountType === "stylist") {
+          navigate("/dashboard", { replace: true });
+        } else {
+          navigate("/my-profile", { replace: true });
+        }
+      }, 100);
     }
   }, [isLoggedIn, isLoading, accountType, navigate]);
 
@@ -41,68 +51,61 @@ export const SignIn = () => {
       return;
     }
 
-    // Step 1: Set loading state and clear previous errors
+    // Clear previous errors and set loading state
     setError("");
     setIsSubmitting(true);
-    console.log("Starting sign in process...");
+    console.log("🔐 Starting sign in process...");
 
     try {
-      // Step 2: Authenticate using signInWithPassword
-      console.log("Authenticating with email:", formData.email);
+      /**
+       * SIMPLIFIED SIGN IN FLOW
+       * 
+       * Just authenticate - let AuthContext handle the rest
+       * This prevents race conditions from duplicate profile fetching
+       */
+      console.log("📧 Authenticating with email:", formData.email);
+      
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
-      // Step 3: Handle authentication failure
+      // Handle authentication errors
       if (signInError) {
-        console.error("Sign in error:", signInError);
+        console.error("❌ Sign in error:", signInError);
         setError("Invalid credentials. Please try again.");
-        return; // Stop execution - finally block will clear loading
+        return;
       }
 
       if (!data.user) {
-        console.error("No user data returned");
+        console.error("❌ No user data returned");
         setError("Authentication failed. Please try again.");
-        return; // Stop execution - finally block will clear loading
+        return;
       }
 
-      console.log("Authentication successful, user ID:", data.user.id);
+      console.log("✅ Authentication successful, user ID:", data.user.id);
+      console.log("⏳ Waiting for AuthContext to load profile and trigger navigation...");
 
-      // Step 4: Fetch user profile from database using maybeSingle()
-      console.log("Fetching user profile...");
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("user_type")
-        .eq("user_id", data.user.id)
-        .maybeSingle(); // Use maybeSingle() instead of single()
-
-      if (profileError) {
-        console.error("Profile fetch error:", profileError);
-        setError("Could not load your profile. Please contact support.");
-        return; // Stop execution - finally block will clear loading
-      }
-
-      // Determine accountType from profiles.user_type
-      const accountType = profile?.user_type || "client"; // Default to client if no profile
-      console.log("Profile fetched successfully, user type:", accountType);
-
-      // Store auth session in localStorage for instant feedback on reload
-      localStorage.setItem('atelistry-auth', 'true');
-
-      console.log("Sign in complete, waiting for AuthContext to update and trigger navigation...");
-      // DO NOT NAVIGATE HERE ❌
-      // Navigation is handled by useEffect above watching AuthContext state
-      // The onAuthStateChange listener in AuthContext will update state
-      // which triggers the useEffect to navigate (single source of truth)
+      /**
+       * DO NOT FETCH PROFILE HERE ❌
+       * DO NOT NAVIGATE HERE ❌
+       * 
+       * The AuthContext onAuthStateChange listener will:
+       * 1. Detect the SIGNED_IN event
+       * 2. Verify the session
+       * 3. Fetch the user profile
+       * 4. Update isLoggedIn and accountType
+       * 5. Trigger the useEffect above to navigate
+       * 
+       * This ensures a single source of truth with no race conditions
+       */
 
     } catch (err) {
-      console.error("Unexpected error during sign in:", err);
+      console.error("❌ Unexpected error during sign in:", err);
       setError("An unexpected error occurred. Please try again.");
     } finally {
-      // Step 5: Always clear loading state
-      // This runs in ALL cases: success, error, exception, network failure
-      console.log("Clearing loading state");
+      // Always clear loading state
+      console.log("🔄 Clearing form loading state");
       setIsSubmitting(false);
     }
   };
