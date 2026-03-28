@@ -84,9 +84,12 @@ export const StylistDashboard = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-[10px] tracking-[0.3em] text-neutral-600 uppercase">
-          Loading dashboard...
-        </p>
+        <div className="text-center space-y-8">
+          <div className="h-px w-24 mx-auto bg-red-900/20 animate-pulse" />
+          <p className="text-[10px] tracking-[0.3em] text-neutral-700 uppercase animate-pulse">
+            Loading dashboard
+          </p>
+        </div>
       </div>
     );
   }
@@ -109,48 +112,48 @@ export const StylistDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen py-32 md:py-40">
-      <div className="mx-auto max-w-5xl px-6 md:px-12">
+    <div className="min-h-screen py-40 md:py-48">
+      <div className="mx-auto max-w-5xl px-6 md:px-16">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-          className="mb-32 space-y-3"
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-40 space-y-6"
         >
-          <h1 className="font-serif text-5xl md:text-7xl font-light tracking-tight text-white">
+          <h1 className="font-serif text-6xl md:text-8xl font-light tracking-tight text-white">
             Dashboard
           </h1>
-          <div className="h-px w-12 bg-red-900/40" />
+          <div className="h-px w-16 bg-red-900/30" />
         </motion.div>
 
         {/* Metrics Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.2 }}
-          className="mb-16"
+          transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-32"
         >
-          <h2 className="text-[9px] tracking-[0.3em] text-neutral-500 uppercase mb-8">
+          <h2 className="text-[8px] tracking-[0.4em] text-neutral-700 uppercase mb-12">
             Metrics
           </h2>
-          <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-16 md:grid-cols-2">
             {/* Profile Views */}
-            <div className="border border-white/5 p-10">
-              <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase mb-4">
+            <div className="border border-white/[0.03] p-12">
+              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase mb-6">
                 Profile Views (Last 30 Days)
               </p>
-              <p className="font-serif text-2xl font-light text-white">
+              <p className="font-serif text-3xl font-light text-white">
                 {profileViewsCount !== null ? profileViewsCount : "Not yet available"}
               </p>
             </div>
 
             {/* Introductions */}
-            <div className="border border-white/5 p-10">
-              <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase mb-4">
+            <div className="border border-white/[0.03] p-12">
+              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase mb-6">
                 Introductions (This Month)
               </p>
-              <p className="font-serif text-2xl font-light text-white">
+              <p className="font-serif text-3xl font-light text-white">
                 {introductionsCount !== null ? introductionsCount : "Not yet available"}
               </p>
             </div>
@@ -161,29 +164,29 @@ export const StylistDashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.4 }}
-          className="mb-16"
+          transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-32"
         >
-          <h2 className="text-[9px] tracking-[0.3em] text-neutral-500 uppercase mb-8">
+          <h2 className="text-[8px] tracking-[0.4em] text-neutral-700 uppercase mb-12">
             Profile Management
           </h2>
-          <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-16 md:grid-cols-2">
             {/* Profile Status */}
-            <div className="border border-white/5 p-10">
-              <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase mb-4">
+            <div className="border border-white/[0.03] p-12">
+              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase mb-6">
                 Profile Status
               </p>
-              <p className="font-serif text-2xl font-light text-white">
+              <p className="font-serif text-3xl font-light text-white">
                 {getProfileStatus()}
               </p>
             </div>
 
             {/* Availability */}
-            <div className="border border-white/5 p-10">
-              <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase mb-4">
+            <div className="border border-white/[0.03] p-12">
+              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase mb-6">
                 Availability
               </p>
-              <p className="font-serif text-2xl font-light text-white">
+              <p className="font-serif text-3xl font-light text-white">
                 {getAvailability()}
               </p>
             </div>
@@ -194,37 +197,28 @@ export const StylistDashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.6 }}
+          transition={{ duration: 1, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h2 className="text-[9px] tracking-[0.3em] text-neutral-500 uppercase mb-8">
+          <h2 className="text-[8px] tracking-[0.4em] text-neutral-700 uppercase mb-12">
             Actions
           </h2>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            {/* View Introductions Button */}
+            <button
+              onClick={() => navigate("/stylist-introductions")}
+              className="group relative overflow-hidden border border-white/[0.05] px-12 py-8 text-[9px] font-bold tracking-[0.4em] text-white uppercase transition-all duration-300 hover:border-white/10"
+            >
+              <span className="relative z-10">View Introductions</span>
+              <span className="absolute inset-0 bg-red-900/5 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-700 ease-out" />
+            </button>
+
             {/* Edit Profile Button */}
             <button
               onClick={() => navigate("/edit-profile")}
-              className="group relative overflow-hidden border border-white/10 px-8 py-6 text-[10px] font-bold tracking-[0.4em] text-white uppercase transition-all hover:border-red-900"
+              className="group relative overflow-hidden border border-white/[0.05] px-12 py-8 text-[9px] font-bold tracking-[0.4em] text-white uppercase transition-all duration-300 hover:border-white/10"
             >
               <span className="relative z-10">Edit Profile</span>
-              <span className="absolute inset-0 bg-red-900/10 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500" />
-            </button>
-
-            {/* Update Status Button */}
-            <button
-              onClick={() => navigate("/update-status")}
-              className="group relative overflow-hidden border border-white/10 px-8 py-6 text-[10px] font-bold tracking-[0.4em] text-white uppercase transition-all hover:border-red-900"
-            >
-              <span className="relative z-10">Update Status</span>
-              <span className="absolute inset-0 bg-red-900/10 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500" />
-            </button>
-
-            {/* View Introductions Button */}
-            <button
-              onClick={() => navigate("/introductions")}
-              className="group relative overflow-hidden border border-white/10 px-8 py-6 text-[10px] font-bold tracking-[0.4em] text-white uppercase transition-all hover:border-red-900"
-            >
-              <span className="relative z-10">View Introductions</span>
-              <span className="absolute inset-0 bg-red-900/10 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500" />
+              <span className="absolute inset-0 bg-red-900/5 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-700 ease-out" />
             </button>
           </div>
         </motion.div>
