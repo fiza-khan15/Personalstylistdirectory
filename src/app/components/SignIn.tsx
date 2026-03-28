@@ -15,23 +15,18 @@ export const SignIn = () => {
 
   /**
    * NAVIGATION HANDLER
-   * Only navigates when:
-   * 1. Auth context has finished loading (!isLoading)
-   * 2. User is confirmed logged in (isLoggedIn)
-   * 3. Account type is known
+   * Waits for auth to finish loading, then navigates based on account type
    */
   useEffect(() => {
+    // Only navigate when auth is confirmed loaded and user is logged in
     if (!isLoading && isLoggedIn && accountType) {
-      console.log("✅ Auth confirmed, navigating to:", accountType === "stylist" ? "/dashboard" : "/my-profile");
+      console.log("Auth complete, navigating to:", accountType === "stylist" ? "/dashboard" : "/my-profile");
       
-      // Use setTimeout to ensure navigation happens after auth is fully settled
-      setTimeout(() => {
-        if (accountType === "stylist") {
-          navigate("/dashboard", { replace: true });
-        } else {
-          navigate("/my-profile", { replace: true });
-        }
-      }, 100);
+      if (accountType === "stylist") {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/my-profile", { replace: true });
+      }
     }
   }, [isLoggedIn, isLoading, accountType, navigate]);
 
@@ -46,66 +41,48 @@ export const SignIn = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Prevent double submissions
     if (isSubmitting) {
       return;
     }
 
-    // Clear previous errors and set loading state
     setError("");
     setIsSubmitting(true);
-    console.log("🔐 Starting sign in process...");
+    console.log("Starting sign in");
 
     try {
-      /**
-       * SIMPLIFIED SIGN IN FLOW
-       * 
-       * Just authenticate - let AuthContext handle the rest
-       * This prevents race conditions from duplicate profile fetching
-       */
-      console.log("📧 Authenticating with email:", formData.email);
-      
+      // Authenticate with Supabase
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
-      // Handle authentication errors
       if (signInError) {
-        console.error("❌ Sign in error:", signInError);
+        console.error("Sign in error:", signInError);
         setError("Invalid credentials. Please try again.");
         return;
       }
 
       if (!data.user) {
-        console.error("❌ No user data returned");
+        console.error("No user data returned");
         setError("Authentication failed. Please try again.");
         return;
       }
 
-      console.log("✅ Authentication successful, user ID:", data.user.id);
-      console.log("⏳ Waiting for AuthContext to load profile and trigger navigation...");
-
-      /**
-       * DO NOT FETCH PROFILE HERE ❌
-       * DO NOT NAVIGATE HERE ❌
-       * 
-       * The AuthContext onAuthStateChange listener will:
-       * 1. Detect the SIGNED_IN event
-       * 2. Verify the session
-       * 3. Fetch the user profile
-       * 4. Update isLoggedIn and accountType
-       * 5. Trigger the useEffect above to navigate
-       * 
-       * This ensures a single source of truth with no race conditions
-       */
+      console.log("Sign in successful, user ID:", data.user.id);
+      
+      // DO NOT:
+      // - Manually touch localStorage
+      // - Fetch profile here (AuthContext handles it)
+      // - Navigate here (useEffect handles it)
+      // 
+      // Supabase will fire SIGNED_IN event
+      // AuthContext will detect it and fetch profile
+      // useEffect above will navigate when ready
 
     } catch (err) {
-      console.error("❌ Unexpected error during sign in:", err);
+      console.error("Sign in exception:", err);
       setError("An unexpected error occurred. Please try again.");
     } finally {
-      // Always clear loading state
-      console.log("🔄 Clearing form loading state");
       setIsSubmitting(false);
     }
   };

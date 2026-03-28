@@ -38,64 +38,31 @@ export const AuthProvider = ({
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Prevent multiple simultaneous profile fetches
-  const isFetchingProfile = useRef(false);
+  // Prevent concurrent profile fetches
+  const isFetchingRef = useRef(false);
 
   /**
-   * ROBUST SESSION CHECKER
-   * Verifies session exists and is valid before any state updates
+   * FETCH USER PROFILE
+   * Gets user type from database after confirming valid session
    */
-  const verifySession = useCallback(async (): Promise<boolean> => {
-    try {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error("Session verification error:", error);
-        return false;
-      }
-
-      if (!session?.user) {
-        console.log("No active session found");
-        return false;
-      }
-
-      // Verify session hasn't expired
-      const now = Math.floor(Date.now() / 1000);
-      if (session.expires_at && session.expires_at < now) {
-        console.log("Session expired");
-        return false;
-      }
-
-      console.log("✅ Session verified, user ID:", session.user.id);
-      return true;
-    } catch (err) {
-      console.error("Session verification exception:", err);
-      return false;
-    }
-  }, []);
-
-  /**
-   * SAFE PROFILE FETCH WITH SESSION VERIFICATION
-   * Only fetches profile if session is confirmed valid
-   */
-  const fetchProfileSafely = useCallback(async () => {
-    // Prevent duplicate fetches
-    if (isFetchingProfile.current) {
-      console.log("⏭️ Profile fetch already in progress, skipping...");
+  const fetchUserProfile = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (isFetchingRef.current) {
+      console.log("Profile fetch already in progress, skipping");
       return;
     }
 
-    isFetchingProfile.current = true;
+    isFetchingRef.current = true;
 
     try {
-      // STEP 1: Verify session exists and is valid
-      const sessionValid = await verifySession();
+      // Get current session directly from Supabase (no manual localStorage)
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-      if (!sessionValid) {
-        console.log("❌ Invalid session, clearing auth state");
+      if (sessionError) {
+        console.error("Session error:", sessionError);
         setIsLoggedIn(false);
         setAccountType(null);
         setUserId(null);
@@ -103,14 +70,9 @@ export const AuthProvider = ({
         return;
       }
 
-      // STEP 2: Get session details
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
+      // No session = not logged in
       if (!session?.user) {
-        // This shouldn't happen after verifySession, but double-check
-        console.log("❌ Session lost during fetch");
+        console.log("No active session");
         setIsLoggedIn(false);
         setAccountType(null);
         setUserId(null);
@@ -119,9 +81,9 @@ export const AuthProvider = ({
       }
 
       const currentUserId = session.user.id;
-      console.log("📥 Fetching profile for user:", currentUserId);
+      console.log("Active session found for user:", currentUserId);
 
-      // STEP 3: Fetch user profile from database
+      // Fetch profile from database
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("user_type")
@@ -130,7 +92,7 @@ export const AuthProvider = ({
 
       if (profileError) {
         console.error("Profile fetch error:", profileError);
-        // Still set as logged in even if profile fails
+        // Still logged in even if profile fails
         setIsLoggedIn(true);
         setAccountType(null);
         setUserId(currentUserId);
@@ -138,127 +100,100 @@ export const AuthProvider = ({
         return;
       }
 
-      // STEP 4: Update state with profile data
-      const userType = profile?.user_type || null;
-      console.log("✅ Profile loaded successfully, type:", userType);
-
+      // Update state with profile data
+      console.log("Profile loaded, user_type:", profile?.user_type);
       setIsLoggedIn(true);
-      setAccountType(userType);
+      setAccountType(profile?.user_type || null);
       setUserId(currentUserId);
       setIsLoading(false);
     } catch (err) {
-      console.error("❌ Unexpected error during profile fetch:", err);
+      console.error("Profile fetch exception:", err);
       setIsLoggedIn(false);
       setAccountType(null);
       setUserId(null);
       setIsLoading(false);
     } finally {
-      isFetchingProfile.current = false;
+      isFetchingRef.current = false;
     }
-  }, [verifySession]);
-
-  /**
-   * CLEAR AUTH STATE
-   * Centralized function to reset all auth state
-   */
-  const clearAuthState = useCallback(() => {
-    console.log("🧹 Clearing auth state");
-    setIsLoggedIn(false);
-    setAccountType(null);
-    setUserId(null);
-    setIsLoading(false);
   }, []);
 
   /**
-   * INITIAL AUTH CHECK ON APP LOAD
-   * Only runs once when app starts
+   * INITIAL SESSION CHECK
+   * Run once on mount
    */
   useEffect(() => {
-    console.log("🚀 AuthContext initializing...");
-    fetchProfileSafely();
-  }, [fetchProfileSafely]);
+    console.log("AuthContext initializing");
+    fetchUserProfile();
+  }, [fetchUserProfile]);
 
   /**
    * AUTH STATE CHANGE LISTENER
-   * Handles sign-in, sign-out, and token refresh events
+   * Handles all auth events from Supabase
    */
   useEffect(() => {
-    console.log("👂 Setting up auth state listener");
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(
-        "🔔 Auth event:",
-        event,
-        "| Has session:",
-        !!session,
-        "| Timestamp:",
-        new Date().toISOString(),
-      );
+      console.log("Auth event:", event, "| Session exists:", !!session);
 
-      // Debug trace for SIGNED_OUT events
+      // Debug SIGNED_OUT events
       if (event === "SIGNED_OUT") {
-        console.trace("⚠️ SIGNED_OUT event triggered from:");
+        console.trace("SIGNED_OUT event origin");
       }
 
-      // Handle different auth events
       switch (event) {
+        case "INITIAL_SESSION":
+          // Already handled by initial useEffect, skip
+          break;
+
         case "SIGNED_IN":
         case "TOKEN_REFRESHED":
-          // Wait briefly for session to stabilize in storage
-          console.log("⏳ Waiting for session to stabilize...");
-          setTimeout(() => {
-            fetchProfileSafely();
-          }, 150);
+        case "USER_UPDATED":
+          // Session changed, refetch profile
+          fetchUserProfile();
           break;
 
         case "SIGNED_OUT":
-          console.log("👋 User signed out, clearing state");
-          clearAuthState();
-          break;
-
-        case "USER_UPDATED":
-          // Profile might have changed, refetch
-          console.log("🔄 User updated, refreshing profile");
-          fetchProfileSafely();
+          // User signed out, clear state immediately
+          console.log("User signed out, clearing state");
+          setIsLoggedIn(false);
+          setAccountType(null);
+          setUserId(null);
+          setIsLoading(false);
           break;
 
         default:
-          // For INITIAL_SESSION and other events, do nothing
-          // The initial useEffect handles the first load
+          console.log("Unhandled auth event:", event);
           break;
       }
     });
 
     return () => {
-      console.log("🛑 Cleaning up auth listener");
       subscription.unsubscribe();
     };
-  }, [fetchProfileSafely, clearAuthState]);
+  }, [fetchUserProfile]);
 
   /**
-   * SIGN OUT FUNCTION
-   * Safely signs out user and clears all state
+   * SIGN OUT
+   * Relies entirely on Supabase to clear session
    */
   const signOut = useCallback(async () => {
-    console.log("🚪 Signing out user...");
+    console.log("Signing out");
 
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("❌ Sign out error:", error);
-        throw error;
-      }
-
-      console.log("✅ Sign out successful");
-      clearAuthState();
-    } catch (err) {
-      console.error("❌ Sign out exception:", err);
-      // Force clear state even if sign out fails
-      clearAuthState();
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      console.error("Sign out error:", error);
+      // Force clear state even on error
+      setIsLoggedIn(false);
+      setAccountType(null);
+      setUserId(null);
+      return;
     }
-  }, [clearAuthState]);
+
+    console.log("Sign out successful");
+    // State will be cleared by SIGNED_OUT event handler
+  }, []);
 
   return (
     <AuthContext.Provider
