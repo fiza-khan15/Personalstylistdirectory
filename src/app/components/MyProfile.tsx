@@ -25,6 +25,15 @@ export const MyProfile = () => {
           userId,
         );
 
+        // Validate UUID format
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(userId)) {
+          console.error("Invalid user ID format:", userId);
+          setProfileData(null);
+          setIsLoading(false);
+          return;
+        }
+
         const { data: profile, error: profileError } =
           await supabase
             .from("profiles")

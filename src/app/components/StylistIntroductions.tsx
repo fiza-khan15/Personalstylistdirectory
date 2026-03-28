@@ -31,6 +31,15 @@ export const StylistIntroductions = () => {
 
         console.log("Fetching introductions for stylist:", userId);
 
+        // Validate UUID format
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(userId)) {
+          console.error("Invalid user ID format:", userId);
+          setIntroductions([]);
+          setIsLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from("introductions")
           .select("*")
