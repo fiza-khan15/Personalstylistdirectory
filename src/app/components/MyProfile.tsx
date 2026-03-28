@@ -85,19 +85,18 @@ export const MyProfile = () => {
   const availability = profileData?.availability || "Not yet provided";
 
   return (
-    <div className="min-h-screen py-40 md:py-48">
-      <div className="mx-auto max-w-5xl px-6 md:px-16">
-        {/* Header */}
+    <div className="min-h-screen py-32 md:py-40">
+      <div className="mx-auto max-w-7xl px-8 md:px-20">
+        {/* Luxurious Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-40 space-y-6"
+          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-48 space-y-8 border-b border-white/[0.02] pb-16"
         >
-          <h1 className="font-serif text-6xl md:text-8xl font-light tracking-tight text-white">
+          <h1 className="font-serif text-7xl md:text-9xl font-extralight tracking-tighter text-white/95">
             My Profile
           </h1>
-          <div className="h-px w-16 bg-red-900/30" />
         </motion.div>
 
         {/* Loading State */}
@@ -105,10 +104,10 @@ export const MyProfile = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="py-40 text-center space-y-8"
+            className="py-48 text-center space-y-8"
           >
-            <div className="h-px w-24 mx-auto bg-red-900/20 animate-pulse" />
-            <p className="text-[10px] tracking-[0.3em] text-neutral-700 uppercase animate-pulse">
+            <div className="h-px w-32 mx-auto bg-white/5 animate-pulse" />
+            <p className="text-[7px] tracking-[0.5em] text-neutral-700/80 uppercase animate-pulse">
               Loading profile
             </p>
           </motion.div>
@@ -117,84 +116,88 @@ export const MyProfile = () => {
         {/* Profile Content */}
         {!isLoading && (
           <>
-            {/* Profile Overview */}
+            {/* Profile Overview Grid */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-40 space-y-16"
+              transition={{ duration: 1.2, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="mb-48"
             >
-              <div className="flex items-end justify-between">
-                <h2 className="text-[8px] font-medium tracking-[0.5em] text-red-900/80 uppercase">
+              <div className="mb-16 flex items-center justify-between border-b border-white/[0.02] pb-8">
+                <h2 className="text-[7px] font-medium tracking-[0.5em] text-neutral-700/60 uppercase">
                   Overview
                 </h2>
                 <button
-                  onClick={() =>
-                    navigate("/client-edit-profile")
-                  }
-                  className="text-[8px] font-medium tracking-[0.3em] text-neutral-700 uppercase transition-colors duration-300 hover:text-white"
+                  onClick={() => navigate("/client-edit-profile")}
+                  className="text-[7px] font-medium tracking-[0.4em] text-neutral-600/80 uppercase transition-all duration-500 hover:text-white/90 hover:tracking-[0.5em]"
                 >
                   Edit Profile
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-x-20 gap-y-16 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-1 md:grid-cols-3">
                 {/* Name */}
-                <div className="space-y-4">
-                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
+                <div className="group relative bg-gradient-to-br from-white/[0.01] to-transparent px-12 py-16 transition-all duration-700 hover:from-white/[0.02]">
+                  <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+                  <p className="mb-8 text-[7px] tracking-[0.5em] text-neutral-700/80 uppercase">
                     Name
                   </p>
-                  <p className="font-serif text-2xl font-light text-white">
+                  <p className="font-serif text-3xl font-extralight text-white/90">
                     {name}
                   </p>
                 </div>
 
                 {/* City */}
-                <div className="space-y-4">
-                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
+                <div className="group relative bg-gradient-to-br from-white/[0.01] to-transparent px-12 py-16 transition-all duration-700 hover:from-white/[0.02]">
+                  <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+                  <p className="mb-8 text-[7px] tracking-[0.5em] text-neutral-700/80 uppercase">
                     City
                   </p>
-                  <p className="font-serif text-2xl font-light text-white">
+                  <p className="font-serif text-3xl font-extralight text-white/90">
                     {city}
                   </p>
                 </div>
 
                 {/* Country */}
-                <div className="space-y-4">
-                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
+                <div className="group relative bg-gradient-to-br from-white/[0.01] to-transparent px-12 py-16 transition-all duration-700 hover:from-white/[0.02]">
+                  <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+                  <p className="mb-8 text-[7px] tracking-[0.5em] text-neutral-700/80 uppercase">
                     Country
                   </p>
-                  <p className="font-serif text-2xl font-light text-white">
+                  <p className="font-serif text-3xl font-extralight text-white/90">
                     {country}
                   </p>
                 </div>
 
                 {/* Member Since */}
-                <div className="space-y-4">
-                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
+                <div className="group relative bg-gradient-to-br from-white/[0.01] to-transparent px-12 py-16 transition-all duration-700 hover:from-white/[0.02]">
+                  <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+                  <p className="mb-8 text-[7px] tracking-[0.5em] text-neutral-700/80 uppercase">
                     Member Since
                   </p>
-                  <p className="font-serif text-2xl font-light text-white">
+                  <p className="font-serif text-3xl font-extralight text-white/90">
                     {memberSince}
                   </p>
                 </div>
 
                 {/* Account Type */}
-                <div className="space-y-4">
-                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
+                <div className="group relative bg-gradient-to-br from-white/[0.01] to-transparent px-12 py-16 transition-all duration-700 hover:from-white/[0.02]">
+                  <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+                  <p className="mb-8 text-[7px] tracking-[0.5em] text-neutral-700/80 uppercase">
                     Account Type
                   </p>
-                  <p className="font-serif text-2xl font-light text-white">
+                  <p className="font-serif text-3xl font-extralight text-white/90">
                     {userType.charAt(0).toUpperCase() + userType.slice(1)}
                   </p>
                 </div>
 
                 {/* Availability */}
-                <div className="space-y-4">
-                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
+                <div className="group relative bg-gradient-to-br from-white/[0.01] to-transparent px-12 py-16 transition-all duration-700 hover:from-white/[0.02]">
+                  <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+                  <p className="mb-8 text-[7px] tracking-[0.5em] text-neutral-700/80 uppercase">
                     Availability
                   </p>
-                  <p className="font-serif text-2xl font-light text-white">
+                  <p className="font-serif text-3xl font-extralight text-white/90">
                     {availability}
                   </p>
                 </div>
@@ -205,49 +208,58 @@ export const MyProfile = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-40 space-y-12 border-t border-white/[0.03] pt-24"
+              transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="mb-48 border-t border-white/[0.02] pt-32"
             >
-              <h2 className="text-[8px] font-medium tracking-[0.5em] text-red-900/80 uppercase">
+              <h2 className="mb-20 text-[7px] font-medium tracking-[0.5em] text-neutral-700/60 uppercase">
                 Bio
               </h2>
 
-              <p className="max-w-3xl font-serif text-xl md:text-2xl font-light leading-loose text-neutral-300">
-                {bio}
-              </p>
+              <div className="relative bg-gradient-to-br from-white/[0.01] to-transparent px-16 py-20">
+                <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent" />
+                <p className="max-w-4xl font-serif text-2xl md:text-3xl font-extralight leading-[2.2] tracking-wide text-neutral-300/90">
+                  {bio}
+                </p>
+              </div>
             </motion.div>
 
             {/* Style Preferences Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-40 space-y-12 border-t border-white/[0.03] pt-24"
+              transition={{ duration: 1.2, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              className="mb-48 border-t border-white/[0.02] pt-32"
             >
-              <h2 className="text-[8px] font-medium tracking-[0.5em] text-red-900/80 uppercase">
+              <h2 className="mb-20 text-[7px] font-medium tracking-[0.5em] text-neutral-700/60 uppercase">
                 Style Preferences
               </h2>
 
-              <p className="max-w-3xl font-serif text-xl md:text-2xl font-light leading-loose text-neutral-300">
-                {stylePreferences}
-              </p>
+              <div className="relative bg-gradient-to-br from-white/[0.01] to-transparent px-16 py-20">
+                <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent" />
+                <p className="max-w-4xl font-serif text-2xl md:text-3xl font-extralight leading-[2.2] tracking-wide text-neutral-300/90">
+                  {stylePreferences}
+                </p>
+              </div>
             </motion.div>
 
-            {/* Actions */}
+            {/* Sign Out Action */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              className="border-t border-white/[0.03] pt-16"
+              transition={{ duration: 1, delay: 0.6 }}
+              className="border-t border-white/[0.02] pt-20"
             >
               <button
                 onClick={async () => {
                   await signOut();
                   navigate("/");
                 }}
-                className="text-[9px] font-medium tracking-[0.3em] text-neutral-700 uppercase transition-colors duration-300 hover:text-white"
+                className="group relative overflow-hidden bg-gradient-to-br from-white/[0.02] to-transparent px-16 py-16 text-left transition-all duration-700 hover:from-white/[0.04]"
               >
-                Sign Out
+                <div className="absolute inset-0 bg-gradient-to-r from-red-900/0 via-red-900/5 to-red-900/0 translate-x-[-100%] transition-transform duration-1000 ease-out group-hover:translate-x-[100%]" />
+                <span className="relative z-10 block text-[8px] font-medium tracking-[0.5em] text-white/70 uppercase transition-colors duration-500 group-hover:text-white/90">
+                  Sign Out
+                </span>
               </button>
             </motion.div>
           </>
