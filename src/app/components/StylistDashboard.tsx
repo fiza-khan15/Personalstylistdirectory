@@ -113,10 +113,10 @@ export const StylistDashboard = () => {
 
   // Helper to format availability
   const getAvailability = () => {
-    if (profileData?.accepting_clients === null || profileData?.accepting_clients === undefined) {
+    if (profileData?.availability === null || profileData?.availability === undefined) {
       return "Not yet available";
     }
-    return profileData.accepting_clients ? "Accepting Clients" : "Not Accepting Clients";
+    return profileData.availability ? "Accepting Clients" : "Not Accepting Clients";
   };
 
   return (

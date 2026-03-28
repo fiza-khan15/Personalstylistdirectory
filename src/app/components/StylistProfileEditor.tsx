@@ -7,12 +7,14 @@ interface StylistProfileEditorProps {
   onNavigate: (page: string) => void;
 }
 
-export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) => {
+export const StylistProfileEditor = ({
+  onNavigate,
+}: StylistProfileEditorProps) => {
   const { userId } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     city: "",
@@ -26,11 +28,15 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
     },
     instagram: "",
     website: "",
-    acceptingClients: false,
+    acceptingClient: false,
   });
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [portfolioImages, setPortfolioImages] = useState<string[]>([]);
+  const [profileImage, setProfileImage] = useState<
+    string | null
+  >(null);
+  const [portfolioImages, setPortfolioImages] = useState<
+    string[]
+  >([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -42,18 +48,19 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
         }
 
         // Fetch profile data from profiles table
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", userId)
-          .maybeSingle();
+        const { data: profile, error: profileError } =
+          await supabase
+            .from("profiles")
+            .select("*")
+            .eq("user_id", userId)
+            .maybeSingle();
 
         if (profileError) {
           console.error("Profile fetch error:", profileError);
           setProfileData(null);
         } else {
           setProfileData(profile);
-          
+
           // Populate form with existing data
           setFormData({
             name: profile?.name || "",
@@ -68,7 +75,8 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
             },
             instagram: profile?.instagram || "",
             website: profile?.website || "",
-            acceptingClients: profile?.accepting_clients || false,
+            acceptingClients:
+              profile?.availability || false,
           });
         }
       } catch (err) {
@@ -81,7 +89,10 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
     fetchProfile();
   }, [userId]);
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (
+    field: string,
+    value: string | boolean,
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -90,7 +101,10 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
       ...prev,
       specialties: {
         ...prev.specialties,
-        [specialty]: !prev.specialties[specialty as keyof typeof prev.specialties],
+        [specialty]:
+          !prev.specialties[
+            specialty as keyof typeof prev.specialties
+          ],
       },
     }));
   };
@@ -105,20 +119,21 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
       }
 
       // Update profile data in profiles table
-      const { data: updatedProfile, error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          name: formData.name,
-          city: formData.city,
-          country: formData.country,
-          bio: formData.bio,
-          specialties: formData.specialties,
-          instagram: formData.instagram,
-          website: formData.website,
-          accepting_clients: formData.acceptingClients,
-        })
-        .eq("user_id", userId)
-        .maybeSingle();
+      const { data: updatedProfile, error: updateError } =
+        await supabase
+          .from("profiles")
+          .update({
+            name: formData.name,
+            city: formData.city,
+            country: formData.country,
+            bio: formData.bio,
+            specialties: formData.specialties,
+            instagram: formData.instagram,
+            website: formData.website,
+            availability: formData.acceptingClients,
+          })
+          .eq("user_id", userId)
+          .maybeSingle();
 
       if (updateError) {
         console.error("Profile update error:", updateError);
@@ -137,7 +152,6 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
   return (
     <div className="min-h-screen py-32 md:py-40">
       <div className="mx-auto max-w-4xl px-6 md:px-12">
-        
         {/* Header */}
         <div className="mb-24 space-y-4 border-b border-white/5 pb-12">
           <button
@@ -159,10 +173,17 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
           <div className="flex items-center gap-8">
             <div className="h-32 w-32 overflow-hidden border border-white/10 bg-neutral-900">
               {profileImage ? (
-                <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
+                <img
+                  src={profileImage}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
-                  <Upload size={24} className="text-neutral-600" />
+                  <Upload
+                    size={24}
+                    className="text-neutral-600"
+                  />
                 </div>
               )}
             </div>
@@ -177,7 +198,7 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
           <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
             Basic Information
           </h2>
-          
+
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <div className="space-y-3">
               <label className="text-[9px] font-medium tracking-[0.3em] text-neutral-500 uppercase">
@@ -186,7 +207,9 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("name", e.target.value)
+                }
                 className="w-full border-b border-white/10 bg-transparent py-3 text-white outline-none transition-colors focus:border-red-900"
               />
             </div>
@@ -198,7 +221,9 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
               <input
                 type="text"
                 value={formData.city}
-                onChange={(e) => handleInputChange("city", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("city", e.target.value)
+                }
                 className="w-full border-b border-white/10 bg-transparent py-3 text-white outline-none transition-colors focus:border-red-900"
               />
             </div>
@@ -210,7 +235,9 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
               <input
                 type="text"
                 value={formData.country}
-                onChange={(e) => handleInputChange("country", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("country", e.target.value)
+                }
                 className="w-full border-b border-white/10 bg-transparent py-3 text-white outline-none transition-colors focus:border-red-900"
               />
             </div>
@@ -221,7 +248,9 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
               </label>
               <textarea
                 value={formData.bio}
-                onChange={(e) => handleInputChange("bio", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("bio", e.target.value)
+                }
                 rows={4}
                 className="w-full border border-white/10 bg-transparent p-4 text-white outline-none transition-colors focus:border-red-900 resize-none"
               />
@@ -234,7 +263,7 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
           <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
             Specialties
           </h2>
-          
+
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {[
               { key: "menswear", label: "Menswear" },
@@ -248,8 +277,14 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
               >
                 <input
                   type="checkbox"
-                  checked={formData.specialties[specialty.key as keyof typeof formData.specialties]}
-                  onChange={() => handleSpecialtyToggle(specialty.key)}
+                  checked={
+                    formData.specialties[
+                      specialty.key as keyof typeof formData.specialties
+                    ]
+                  }
+                  onChange={() =>
+                    handleSpecialtyToggle(specialty.key)
+                  }
                   className="h-5 w-5 cursor-pointer border-white/10 bg-transparent accent-red-900"
                 />
                 <span className="text-[10px] font-medium tracking-[0.3em] text-white uppercase">
@@ -265,23 +300,30 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
           <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
             Portfolio Images
           </h2>
-          
+
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {portfolioImages.map((img, index) => (
-              <div key={index} className="group relative aspect-square overflow-hidden border border-white/10">
-                <img src={img} alt={`Portfolio ${index + 1}`} className="h-full w-full object-cover" />
+              <div
+                key={index}
+                className="group relative aspect-square overflow-hidden border border-white/10"
+              >
+                <img
+                  src={img}
+                  alt={`Portfolio ${index + 1}`}
+                  className="h-full w-full object-cover"
+                />
                 <button className="absolute right-2 top-2 bg-neutral-950/80 p-2 opacity-0 transition-opacity group-hover:opacity-100">
                   <X size={16} className="text-white" />
                 </button>
               </div>
             ))}
-            
+
             {/* Upload placeholder */}
             <button className="flex aspect-square items-center justify-center border border-dashed border-white/10 bg-neutral-900/20 transition-all hover:border-white/30">
               <Upload size={24} className="text-neutral-600" />
             </button>
           </div>
-          
+
           <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
             Upload up to 12 portfolio images
           </p>
@@ -292,7 +334,7 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
           <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
             Social Links
           </h2>
-          
+
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <div className="space-y-3">
               <label className="text-[9px] font-medium tracking-[0.3em] text-neutral-500 uppercase">
@@ -301,7 +343,9 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
               <input
                 type="text"
                 value={formData.instagram}
-                onChange={(e) => handleInputChange("instagram", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("instagram", e.target.value)
+                }
                 placeholder="@username"
                 className="w-full border-b border-white/10 bg-transparent py-3 text-white outline-none transition-colors focus:border-red-900"
               />
@@ -314,7 +358,9 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
               <input
                 type="text"
                 value={formData.website}
-                onChange={(e) => handleInputChange("website", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("website", e.target.value)
+                }
                 placeholder="www.yourwebsite.com"
                 className="w-full border-b border-white/10 bg-transparent py-3 text-white outline-none transition-colors focus:border-red-900"
               />
@@ -327,7 +373,7 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
           <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
             Availability
           </h2>
-          
+
           <label className="flex cursor-pointer items-center justify-between border border-white/5 bg-neutral-900/20 p-8 transition-all hover:border-white/10">
             <div className="space-y-2">
               <p className="text-[10px] font-medium tracking-[0.3em] text-white uppercase">
@@ -340,7 +386,12 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
             <input
               type="checkbox"
               checked={formData.acceptingClients}
-              onChange={(e) => handleInputChange("acceptingClients", e.target.checked)}
+              onChange={(e) =>
+                handleInputChange(
+                  "acceptingClients",
+                  e.target.checked,
+                )
+              }
               className="h-6 w-12 cursor-pointer appearance-none rounded-full bg-neutral-800 transition-all checked:bg-red-900 relative before:absolute before:left-1 before:top-1 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-all before:checked:translate-x-6 checked:before:translate-x-6"
             />
           </label>
