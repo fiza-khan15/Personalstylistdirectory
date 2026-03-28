@@ -82,6 +82,18 @@ export const AuthProvider = ({
 
       const currentUserId = session.user.id;
       console.log("Active session found for user:", currentUserId);
+      console.log("User ID type:", typeof currentUserId, "Value:", currentUserId);
+
+      // Validate that we have a proper UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(currentUserId)) {
+        console.error("Invalid user ID format - not a UUID:", currentUserId);
+        setIsLoggedIn(false);
+        setAccountType(null);
+        setUserId(null);
+        setIsLoading(false);
+        return;
+      }
 
       // Fetch profile from database
       const { data: profile, error: profileError } = await supabase

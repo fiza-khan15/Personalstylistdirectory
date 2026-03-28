@@ -25,6 +25,15 @@ export const MyProfile = () => {
           userId,
         );
 
+        // Validate UUID format
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(userId)) {
+          console.error("Invalid user ID format:", userId);
+          setProfileData(null);
+          setIsLoading(false);
+          return;
+        }
+
         const { data: profile, error: profileError } =
           await supabase
             .from("profiles")
@@ -76,19 +85,19 @@ export const MyProfile = () => {
   const availability = profileData?.availability || "Not yet provided";
 
   return (
-    <div className="min-h-screen py-32 md:py-40">
-      <div className="mx-auto max-w-5xl px-6 md:px-12">
+    <div className="min-h-screen py-40 md:py-48">
+      <div className="mx-auto max-w-5xl px-6 md:px-16">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-          className="mb-32 space-y-3"
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-40 space-y-6"
         >
-          <h1 className="font-serif text-5xl md:text-7xl font-light tracking-tight text-white">
+          <h1 className="font-serif text-6xl md:text-8xl font-light tracking-tight text-white">
             My Profile
           </h1>
-          <div className="h-px w-12 bg-red-900/40" />
+          <div className="h-px w-16 bg-red-900/30" />
         </motion.div>
 
         {/* Loading State */}
@@ -96,10 +105,11 @@ export const MyProfile = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="py-40 text-center"
+            className="py-40 text-center space-y-8"
           >
-            <p className="text-[10px] tracking-[0.3em] text-neutral-600 uppercase">
-              Loading profile...
+            <div className="h-px w-24 mx-auto bg-red-900/20 animate-pulse" />
+            <p className="text-[10px] tracking-[0.3em] text-neutral-700 uppercase animate-pulse">
+              Loading profile
             </p>
           </motion.div>
         )}
@@ -111,80 +121,80 @@ export const MyProfile = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.2 }}
-              className="mb-40 space-y-12"
+              transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="mb-40 space-y-16"
             >
               <div className="flex items-end justify-between">
-                <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+                <h2 className="text-[8px] font-medium tracking-[0.5em] text-red-900/80 uppercase">
                   Overview
                 </h2>
                 <button
                   onClick={() =>
                     navigate("/client-edit-profile")
                   }
-                  className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
+                  className="text-[8px] font-medium tracking-[0.3em] text-neutral-700 uppercase transition-colors duration-300 hover:text-white"
                 >
                   Edit Profile
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-x-16 gap-y-12 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-x-20 gap-y-16 md:grid-cols-3">
                 {/* Name */}
-                <div className="space-y-3">
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                <div className="space-y-4">
+                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
                     Name
                   </p>
-                  <p className="font-serif text-xl font-light text-white">
+                  <p className="font-serif text-2xl font-light text-white">
                     {name}
                   </p>
                 </div>
 
                 {/* City */}
-                <div className="space-y-3">
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                <div className="space-y-4">
+                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
                     City
                   </p>
-                  <p className="font-serif text-xl font-light text-white">
+                  <p className="font-serif text-2xl font-light text-white">
                     {city}
                   </p>
                 </div>
 
                 {/* Country */}
-                <div className="space-y-3">
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                <div className="space-y-4">
+                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
                     Country
                   </p>
-                  <p className="font-serif text-xl font-light text-white">
+                  <p className="font-serif text-2xl font-light text-white">
                     {country}
                   </p>
                 </div>
 
                 {/* Member Since */}
-                <div className="space-y-3">
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                <div className="space-y-4">
+                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
                     Member Since
                   </p>
-                  <p className="font-serif text-xl font-light text-white">
+                  <p className="font-serif text-2xl font-light text-white">
                     {memberSince}
                   </p>
                 </div>
 
                 {/* Account Type */}
-                <div className="space-y-3">
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                <div className="space-y-4">
+                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
                     Account Type
                   </p>
-                  <p className="font-serif text-xl font-light text-white">
+                  <p className="font-serif text-2xl font-light text-white">
                     {userType.charAt(0).toUpperCase() + userType.slice(1)}
                   </p>
                 </div>
 
                 {/* Availability */}
-                <div className="space-y-3">
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                <div className="space-y-4">
+                  <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
                     Availability
                   </p>
-                  <p className="font-serif text-xl font-light text-white">
+                  <p className="font-serif text-2xl font-light text-white">
                     {availability}
                   </p>
                 </div>
@@ -195,14 +205,14 @@ export const MyProfile = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.3 }}
-              className="mb-40 space-y-12 border-t border-white/5 pt-20"
+              transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="mb-40 space-y-12 border-t border-white/[0.03] pt-24"
             >
-              <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+              <h2 className="text-[8px] font-medium tracking-[0.5em] text-red-900/80 uppercase">
                 Bio
               </h2>
 
-              <p className="max-w-2xl font-serif text-lg font-light leading-relaxed text-neutral-300">
+              <p className="max-w-3xl font-serif text-xl md:text-2xl font-light leading-loose text-neutral-300">
                 {bio}
               </p>
             </motion.div>
@@ -211,14 +221,14 @@ export const MyProfile = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.4 }}
-              className="mb-40 space-y-12 border-t border-white/5 pt-20"
+              transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="mb-40 space-y-12 border-t border-white/[0.03] pt-24"
             >
-              <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+              <h2 className="text-[8px] font-medium tracking-[0.5em] text-red-900/80 uppercase">
                 Style Preferences
               </h2>
 
-              <p className="max-w-2xl font-serif text-lg font-light leading-relaxed text-neutral-300">
+              <p className="max-w-3xl font-serif text-xl md:text-2xl font-light leading-loose text-neutral-300">
                 {stylePreferences}
               </p>
             </motion.div>
@@ -228,14 +238,14 @@ export const MyProfile = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.5 }}
-              className="border-t border-white/5 pt-12"
+              className="border-t border-white/[0.03] pt-16"
             >
               <button
                 onClick={async () => {
                   await signOut();
                   navigate("/");
                 }}
-                className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
+                className="text-[9px] font-medium tracking-[0.3em] text-neutral-700 uppercase transition-colors duration-300 hover:text-white"
               >
                 Sign Out
               </button>
