@@ -10,6 +10,7 @@ export const MyProfile = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -21,7 +22,7 @@ export const MyProfile = () => {
         }
 
         console.log(
-          "Fetching client profile using userId from AuthContext:",
+          "Fetching profile using userId from AuthContext:",
           userId,
         );
 
@@ -34,14 +35,14 @@ export const MyProfile = () => {
 
         if (profileError) {
           console.error("Profile fetch error:", profileError);
+          setError(null);
           setProfileData(null);
         } else {
-          console.log("Client profile loaded:", profile);
           setProfileData(profile);
         }
       } catch (err) {
-        console.error("Unexpected profile fetch error:", err);
-        setProfileData(null);
+        console.error("Unexpected error:", err);
+        setError(null);
       } finally {
         setIsLoading(false);
       }
@@ -50,30 +51,15 @@ export const MyProfile = () => {
     fetchProfile();
   }, [userId]);
 
-  // Format date helper
-  const formatMemberSince = (dateString: string | null) => {
-    if (!dateString) return "Not yet provided";
-    
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-      });
-    } catch {
-      return "Not yet provided";
-    }
+  const clientData = {
+    name: profileData?.name || "Not yet provided",
+    city: profileData?.city || "Not yet provided",
+    memberSince:
+      profileData?.member_since || "Not yet provided",
+    styleInterests: profileData?.style_interests || [],
+    styleDescription:
+      profileData?.style_preferences || "Not yet provided",
   };
-
-  // Map real Supabase data to UI fields
-  const name = profileData?.name || "Not yet provided";
-  const city = profileData?.city || "Not yet provided";
-  const country = profileData?.country || "Not yet provided";
-  const bio = profileData?.bio || "Not yet provided";
-  const stylePreferences = profileData?.style_preferences || "Not yet provided";
-  const memberSince = formatMemberSince(profileData?.created_at);
-  const userType = profileData?.user_type || "Not yet provided";
-  const availability = profileData?.availability || "Not yet provided";
 
   return (
     <div className="min-h-screen py-32 md:py-40">
@@ -104,6 +90,19 @@ export const MyProfile = () => {
           </motion.div>
         )}
 
+        {/* No Profile Fallback */}
+        {!isLoading && !profileData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="py-40 text-center"
+          >
+            <p className="font-serif text-xl text-neutral-500">
+              Profile not yet available.
+            </p>
+          </motion.div>
+        )}
+
         {/* Profile Content */}
         {!isLoading && (
           <>
@@ -129,69 +128,60 @@ export const MyProfile = () => {
               </div>
 
               <div className="grid grid-cols-1 gap-x-16 gap-y-12 md:grid-cols-3">
-                {/* Name */}
                 <div className="space-y-3">
                   <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
                     Name
                   </p>
                   <p className="font-serif text-xl font-light text-white">
-                    {name}
+                    {clientData.name}
                   </p>
                 </div>
 
-                {/* City */}
                 <div className="space-y-3">
                   <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
                     City
                   </p>
                   <p className="font-serif text-xl font-light text-white">
-                    {city}
+                    {clientData.city}
                   </p>
                 </div>
 
-                {/* Country */}
-                <div className="space-y-3">
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
-                    Country
-                  </p>
-                  <p className="font-serif text-xl font-light text-white">
-                    {country}
-                  </p>
-                </div>
-
-                {/* Member Since */}
                 <div className="space-y-3">
                   <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
                     Member Since
                   </p>
                   <p className="font-serif text-xl font-light text-white">
-                    {memberSince}
-                  </p>
-                </div>
-
-                {/* Account Type */}
-                <div className="space-y-3">
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
-                    Account Type
-                  </p>
-                  <p className="font-serif text-xl font-light text-white">
-                    {userType.charAt(0).toUpperCase() + userType.slice(1)}
-                  </p>
-                </div>
-
-                {/* Availability */}
-                <div className="space-y-3">
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
-                    Availability
-                  </p>
-                  <p className="font-serif text-xl font-light text-white">
-                    {availability}
+                    {clientData.memberSince}
                   </p>
                 </div>
               </div>
+
+              <div className="space-y-4 pt-8">
+                <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                  Style Interests
+                </p>
+                {clientData.styleInterests.length > 0 ? (
+                  <div className="flex flex-wrap gap-3">
+                    {clientData.styleInterests.map(
+                      (interest: string) => (
+                        <span
+                          key={interest}
+                          className="border border-white/10 px-6 py-3 text-[9px] font-medium tracking-[0.3em] text-neutral-400 uppercase"
+                        >
+                          {interest}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                ) : (
+                  <p className="font-serif text-xl font-light text-neutral-500">
+                    Not yet provided
+                  </p>
+                )}
+              </div>
             </motion.div>
 
-            {/* Bio Section */}
+            {/* Style Preferences */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -199,27 +189,11 @@ export const MyProfile = () => {
               className="mb-40 space-y-12 border-t border-white/5 pt-20"
             >
               <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-                Bio
-              </h2>
-
-              <p className="max-w-2xl font-serif text-lg font-light leading-relaxed text-neutral-300">
-                {bio}
-              </p>
-            </motion.div>
-
-            {/* Style Preferences Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.4 }}
-              className="mb-40 space-y-12 border-t border-white/5 pt-20"
-            >
-              <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
                 Style Preferences
               </h2>
 
               <p className="max-w-2xl font-serif text-lg font-light leading-relaxed text-neutral-300">
-                {stylePreferences}
+                {clientData.styleDescription}
               </p>
             </motion.div>
 
@@ -227,7 +201,7 @@ export const MyProfile = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
               className="border-t border-white/5 pt-12"
             >
               <button
