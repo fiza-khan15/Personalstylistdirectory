@@ -2,10 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Upload, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router";
 
-export const StylistProfileEditor = () => {
-  const navigate = useNavigate();
+interface StylistProfileEditorProps {
+  onNavigate: (page: string) => void;
+}
+
+export const StylistProfileEditor = ({
+  onNavigate,
+}: StylistProfileEditorProps) => {
   const { userId } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -24,7 +28,7 @@ export const StylistProfileEditor = () => {
     },
     instagram: "",
     website: "",
-    acceptingClients: false,
+    acceptingClient: false,
   });
 
   const [profileImage, setProfileImage] = useState<
@@ -136,7 +140,7 @@ export const StylistProfileEditor = () => {
       } else {
         setProfileData(updatedProfile);
         console.log("Saving profile:", formData);
-        navigate("/dashboard");
+        onNavigate("dashboard");
       }
     } catch (err) {
       console.error("Unexpected error:", err);
@@ -151,7 +155,7 @@ export const StylistProfileEditor = () => {
         {/* Header */}
         <div className="mb-24 space-y-4 border-b border-white/5 pb-12">
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => onNavigate("dashboard")}
             className="text-[9px] font-medium tracking-[0.4em] text-neutral-600 uppercase transition-colors hover:text-white"
           >
             ← Back to Dashboard
@@ -402,7 +406,7 @@ export const StylistProfileEditor = () => {
             Save Changes
           </button>
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => onNavigate("dashboard")}
             className="text-[9px] font-medium tracking-[0.4em] text-neutral-600 uppercase transition-colors hover:text-white"
           >
             Cancel

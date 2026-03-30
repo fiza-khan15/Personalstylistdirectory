@@ -120,112 +120,113 @@ export const StylistDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen py-32 md:py-40">
-      <div className="mx-auto max-w-7xl px-8 md:px-20">
-        {/* Luxurious Header with Subtle Sophistication */}
+    <div className="min-h-screen py-40 md:py-48">
+      <div className="mx-auto max-w-5xl px-6 md:px-16">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-48 space-y-8 border-b border-white/[0.02] pb-16"
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-40 space-y-6"
         >
-          <h1 className="font-serif text-7xl md:text-9xl font-extralight tracking-tighter text-white/95">
+          <h1 className="font-serif text-6xl md:text-8xl font-light tracking-tight text-white">
             Dashboard
           </h1>
+          <div className="h-px w-16 bg-red-900/30" />
         </motion.div>
 
-        {/* Refined Metrics Section */}
+        {/* Metrics Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-48"
+          transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-32"
         >
-          <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
+          <h2 className="text-[8px] tracking-[0.4em] text-neutral-700 uppercase mb-12">
+            Metrics
+          </h2>
+          <div className="grid grid-cols-1 gap-16 md:grid-cols-2">
             {/* Profile Views */}
-            <div className="group relative bg-gradient-to-br from-white/[0.01] to-transparent px-16 py-20 transition-all duration-700 hover:from-white/[0.02]">
-              <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
-              <p className="mb-10 text-[7px] font-medium tracking-[0.5em] text-neutral-700/80 uppercase">
-                Profile Views — Last 30 Days
+            <div className="border border-white/[0.03] p-12">
+              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase mb-6">
+                Profile Views (Last 30 Days)
               </p>
-              <p className="font-serif text-5xl md:text-6xl font-extralight tracking-tight text-white/90">
-                {profileViewsCount !== null ? profileViewsCount : "—"}
+              <p className="font-serif text-3xl font-light text-white">
+                {profileViewsCount !== null ? profileViewsCount : "Not yet available"}
               </p>
             </div>
 
             {/* Introductions */}
-            <div className="group relative bg-gradient-to-br from-white/[0.01] to-transparent px-16 py-20 transition-all duration-700 hover:from-white/[0.02]">
-              <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
-              <p className="mb-10 text-[7px] font-medium tracking-[0.5em] text-neutral-700/80 uppercase">
-                Introductions — This Month
+            <div className="border border-white/[0.03] p-12">
+              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase mb-6">
+                Introductions (This Month)
               </p>
-              <p className="font-serif text-5xl md:text-6xl font-extralight tracking-tight text-white/90">
-                {introductionsCount !== null ? introductionsCount : "—"}
+              <p className="font-serif text-3xl font-light text-white">
+                {introductionsCount !== null ? introductionsCount : "Not yet available"}
               </p>
             </div>
           </div>
         </motion.div>
 
-        {/* Elegant Profile Status */}
+        {/* Profile Management Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-48"
+          transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-32"
         >
-          <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
+          <h2 className="text-[8px] tracking-[0.4em] text-neutral-700 uppercase mb-12">
+            Profile Management
+          </h2>
+          <div className="grid grid-cols-1 gap-16 md:grid-cols-2">
             {/* Profile Status */}
-            <div className="group relative bg-gradient-to-br from-white/[0.01] to-transparent px-16 py-20 transition-all duration-700 hover:from-white/[0.02]">
-              <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
-              <p className="mb-10 text-[7px] font-medium tracking-[0.5em] text-neutral-700/80 uppercase">
+            <div className="border border-white/[0.03] p-12">
+              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase mb-6">
                 Profile Status
               </p>
-              <p className="font-serif text-5xl md:text-6xl font-extralight tracking-tight text-white/90">
+              <p className="font-serif text-3xl font-light text-white">
                 {getProfileStatus()}
               </p>
             </div>
 
             {/* Availability */}
-            <div className="group relative bg-gradient-to-br from-white/[0.01] to-transparent px-16 py-20 transition-all duration-700 hover:from-white/[0.02]">
-              <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
-              <p className="mb-10 text-[7px] font-medium tracking-[0.5em] text-neutral-700/80 uppercase">
+            <div className="border border-white/[0.03] p-12">
+              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase mb-6">
                 Availability
               </p>
-              <p className="font-serif text-5xl md:text-6xl font-extralight tracking-tight text-white/90">
+              <p className="font-serif text-3xl font-light text-white">
                 {getAvailability()}
               </p>
             </div>
           </div>
         </motion.div>
 
-        {/* Refined Actions */}
+        {/* Actions Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="border-t border-white/[0.02] pt-20"
+          transition={{ duration: 1, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className="flex flex-col gap-1 md:flex-row">
+          <h2 className="text-[8px] tracking-[0.4em] text-neutral-700 uppercase mb-12">
+            Actions
+          </h2>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             {/* View Introductions Button */}
             <button
               onClick={() => navigate("/stylist-introductions")}
-              className="group relative flex-1 overflow-hidden bg-gradient-to-br from-white/[0.02] to-transparent px-16 py-16 text-left transition-all duration-700 hover:from-white/[0.04]"
+              className="group relative overflow-hidden border border-white/[0.05] px-12 py-8 text-[9px] font-bold tracking-[0.4em] text-white uppercase transition-all duration-300 hover:border-white/10"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-red-900/0 via-red-900/5 to-red-900/0 translate-x-[-100%] transition-transform duration-1000 ease-out group-hover:translate-x-[100%]" />
-              <span className="relative z-10 block text-[8px] font-medium tracking-[0.5em] text-white/70 uppercase transition-colors duration-500 group-hover:text-white/90">
-                View Introductions
-              </span>
+              <span className="relative z-10">View Introductions</span>
+              <span className="absolute inset-0 bg-red-900/5 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-700 ease-out" />
             </button>
 
             {/* Edit Profile Button */}
             <button
               onClick={() => navigate("/edit-profile")}
-              className="group relative flex-1 overflow-hidden bg-gradient-to-br from-white/[0.02] to-transparent px-16 py-16 text-left transition-all duration-700 hover:from-white/[0.04]"
+              className="group relative overflow-hidden border border-white/[0.05] px-12 py-8 text-[9px] font-bold tracking-[0.4em] text-white uppercase transition-all duration-300 hover:border-white/10"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-red-900/0 via-red-900/5 to-red-900/0 translate-x-[-100%] transition-transform duration-1000 ease-out group-hover:translate-x-[100%]" />
-              <span className="relative z-10 block text-[8px] font-medium tracking-[0.5em] text-white/70 uppercase transition-colors duration-500 group-hover:text-white/90">
-                Edit Profile
-              </span>
+              <span className="relative z-10">Edit Profile</span>
+              <span className="absolute inset-0 bg-red-900/5 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-700 ease-out" />
             </button>
           </div>
         </motion.div>
