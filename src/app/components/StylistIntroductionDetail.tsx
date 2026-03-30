@@ -29,7 +29,6 @@ export const StylistIntroductionDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [introduction, setIntroduction] = useState<Introduction | null>(null);
   const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
-  const [response, setResponse] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const introId = searchParams.get("id");
@@ -104,32 +103,12 @@ export const StylistIntroductionDetail = () => {
       const date = new Date(dateString);
       return date.toLocaleDateString("en-US", {
         year: "numeric",
-        month: "long",
+        month: "short",
         day: "numeric",
       });
     } catch {
-      return "Date unavailable";
+      return "";
     }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "pending":
-        return "text-amber-700/80";
-      case "active":
-      case "accepted":
-        return "text-emerald-700/80";
-      case "closed":
-      case "declined":
-        return "text-neutral-600";
-      default:
-        return "text-neutral-600";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    if (!status) return "Status Unknown";
-    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   };
 
   const handleAccept = async () => {
@@ -180,11 +159,11 @@ export const StylistIntroductionDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-8">
-          <div className="h-px w-24 mx-auto bg-red-900/20 animate-pulse" />
-          <p className="text-[10px] tracking-[0.3em] text-neutral-700 uppercase animate-pulse">
-            Loading introduction
+          <div className="h-px w-24 mx-auto bg-[#4a1a1a]/20 animate-pulse" />
+          <p className="text-[10px] tracking-[0.3em] text-neutral-500 uppercase animate-pulse">
+            Loading
           </p>
         </div>
       </div>
@@ -193,9 +172,8 @@ export const StylistIntroductionDetail = () => {
 
   if (!introduction) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-8">
-          <div className="h-px w-12 mx-auto bg-red-900/20" />
           <p className="font-serif text-2xl font-light text-neutral-600">
             Introduction not found
           </p>
@@ -211,183 +189,90 @@ export const StylistIntroductionDetail = () => {
   }
 
   return (
-    <div className="min-h-screen py-40 md:py-48">
-      <div className="mx-auto max-w-4xl px-6 md:px-16">
+    <div className="min-h-screen bg-black">
+      <div className="mx-auto max-w-4xl px-8 pt-32 pb-24">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-32 space-y-12"
+          transition={{ duration: 0.6 }}
+          className="mb-24 text-center"
         >
-          <div className="space-y-6">
-            <h1 className="font-serif text-6xl md:text-8xl font-light tracking-tight text-white">
-              {clientProfile?.name || "Client Introduction"}
-            </h1>
-            <div className="h-px w-16 bg-red-900/30" />
-          </div>
+          <h1 className="font-serif text-4xl md:text-5xl font-light text-white mb-16">
+            {clientProfile?.name || ""}
+          </h1>
+          
+          <p className="text-[10px] tracking-[0.2em] leading-relaxed text-neutral-500 max-w-2xl mx-auto mb-16">
+            {introduction.message || ""}
+          </p>
 
-          <div className="flex flex-wrap items-center gap-x-12 gap-y-6">
-            <div className="space-y-2">
+          {/* Info Grid */}
+          <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 text-left">
+            <div className="space-y-1">
               <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
-                Service Type
+                Date
               </p>
-              <p className="text-[10px] font-light tracking-[0.25em] text-neutral-400 uppercase">
-                {introduction.service_type || "Not specified"}
-              </p>
-            </div>
-
-            <div className="h-8 w-px bg-white/[0.03]" />
-
-            <div className="space-y-2">
-              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
-                Status
-              </p>
-              <p
-                className={`text-[10px] font-medium tracking-[0.3em] uppercase ${getStatusColor(
-                  introduction.status
-                )}`}
-              >
-                {getStatusLabel(introduction.status)}
-              </p>
-            </div>
-
-            <div className="h-8 w-px bg-white/[0.03]" />
-
-            <div className="space-y-2">
-              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
-                Received
-              </p>
-              <p className="text-[10px] font-light tracking-[0.25em] text-neutral-400 uppercase">
+              <p className="text-[9px] tracking-[0.2em] text-neutral-500 uppercase">
                 {formatDate(introduction.created_at)}
               </p>
             </div>
-          </div>
-        </motion.div>
 
-        {/* Client Request */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.2 }}
-          className="mb-32 space-y-10 border-t border-white/[0.03] pt-20"
-        >
-          <h2 className="text-[8px] font-medium tracking-[0.5em] text-red-900/80 uppercase">
-            Client Request
-          </h2>
-
-          <p className="font-serif text-xl md:text-2xl font-light leading-loose text-neutral-300">
-            {introduction.message || "No message provided"}
-          </p>
-        </motion.div>
-
-        {/* Client Context */}
-        {clientProfile && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="mb-32 space-y-16 border-t border-white/[0.03] pt-20"
-          >
-            <h2 className="text-[8px] font-medium tracking-[0.5em] text-red-900/80 uppercase">
-              Client Context
-            </h2>
-
-            <div className="grid grid-cols-1 gap-16 md:grid-cols-2">
-              <div className="space-y-4">
-                <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
-                  Location
-                </p>
-                <p className="font-serif text-xl font-light text-white">
-                  {clientProfile.city && clientProfile.country
-                    ? `${clientProfile.city}, ${clientProfile.country}`
-                    : clientProfile.city || clientProfile.country || "Not provided"}
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
-                  Style Direction
-                </p>
-                <p className="font-serif text-xl font-light text-white">
-                  {clientProfile.style_preferences || "Not provided"}
-                </p>
-              </div>
+            <div className="space-y-1">
+              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
+                Portfolio
+              </p>
+              <p className="text-[9px] tracking-[0.2em] text-neutral-500 uppercase">
+                {introduction.service_type || ""}
+              </p>
             </div>
-          </motion.div>
-        )}
 
-        {/* Response Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.4 }}
-          className="mb-32 space-y-10 border-t border-white/[0.03] pt-20"
-        >
-          <h2 className="text-[8px] font-medium tracking-[0.5em] text-red-900/80 uppercase">
-            Your Response
-          </h2>
-
-          <textarea
-            value={response}
-            onChange={(e) => setResponse(e.target.value)}
-            placeholder="Compose your response to the client..."
-            className="w-full min-h-[280px] resize-none border border-white/[0.05] bg-transparent px-10 py-8 font-serif text-lg font-light leading-loose text-white placeholder:text-neutral-800 focus:border-white/[0.1] focus:outline-none transition-colors duration-300"
-          />
-
-          <p className="text-[8px] tracking-[0.25em] text-neutral-800 uppercase">
-            This message will be facilitated through the Atelistry concierge service
-          </p>
+            <div className="space-y-1">
+              <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
+                Compensation Range
+              </p>
+              <p className="text-[9px] tracking-[0.2em] text-neutral-500 uppercase">
+                {clientProfile?.style_preferences || ""}
+              </p>
+            </div>
+          </div>
         </motion.div>
 
         {/* Actions */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.5 }}
-          className="space-y-12 border-t border-white/[0.03] pt-20"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="flex flex-col md:flex-row justify-center gap-4 mb-16"
         >
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-8">
-            <button
-              onClick={handleAccept}
-              disabled={isSubmitting || introduction.status === "accepted"}
-              className="group border border-white bg-white px-16 py-6 text-[9px] font-bold tracking-[0.4em] text-neutral-950 uppercase transition-all duration-300 hover:bg-transparent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {introduction.status === "accepted" ? "Accepted" : "Accept Introduction"}
-            </button>
+          <button
+            onClick={handleAccept}
+            disabled={isSubmitting || introduction.status === "accepted"}
+            className="bg-white text-black px-10 py-4 text-[8px] font-bold tracking-[0.4em] uppercase transition-all duration-300 hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {introduction.status === "accepted" ? "Accepted" : "Accept Introduction"}
+          </button>
 
-            <button
-              disabled={isSubmitting}
-              className="group border border-white/10 px-16 py-6 text-[9px] font-bold tracking-[0.4em] text-white uppercase transition-all duration-300 hover:border-white hover:bg-white hover:text-neutral-950 disabled:opacity-50"
-            >
-              Send Response
-            </button>
-
-            <button
-              onClick={handleDecline}
-              disabled={isSubmitting}
-              className="text-[9px] font-medium tracking-[0.3em] text-neutral-700 uppercase transition-colors hover:text-white md:ml-auto disabled:opacity-50"
-            >
-              Decline
-            </button>
-          </div>
+          <button
+            onClick={handleDecline}
+            disabled={isSubmitting}
+            className="border border-white/10 text-white px-10 py-4 text-[8px] font-bold tracking-[0.4em] uppercase transition-all duration-300 hover:bg-white hover:text-black disabled:opacity-50"
+          >
+            Decline
+          </button>
         </motion.div>
 
-        {/* Back Navigation */}
+        {/* Back Button */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.6 }}
-          className="mt-32 border-t border-white/[0.03] pt-16"
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-center"
         >
           <button
             onClick={() => navigate("/stylist-introductions")}
-            className="group flex items-center gap-3 text-[9px] font-medium tracking-[0.3em] text-neutral-700 uppercase transition-colors duration-300 hover:text-white"
+            className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase hover:text-white transition-colors duration-300"
           >
-            <span className="text-red-900/50 group-hover:text-red-900 transition-colors">
-              ←
-            </span>
-            Return to Introductions
+            ← Back
           </button>
         </motion.div>
       </div>

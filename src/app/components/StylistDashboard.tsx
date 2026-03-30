@@ -165,18 +165,21 @@ export const StylistDashboard = () => {
             </p>
           </div>
 
-          {/* Introductions */}
-          <div className="border border-white/10 bg-black p-8">
-            <p className="text-[8px] tracking-[0.3em] text-[#4a1a1a] uppercase mb-4">
+          {/* Introductions - Clickable */}
+          <button
+            onClick={() => navigate("/stylist-introductions")}
+            className="border border-white/10 bg-black p-8 text-left transition-all duration-300 hover:border-white/20 hover:bg-white/[0.02] group"
+          >
+            <p className="text-[8px] tracking-[0.3em] text-[#4a1a1a] uppercase mb-4 group-hover:text-[#4a1a1a]/80 transition-colors">
               Introductions
             </p>
-            <p className="font-serif text-5xl font-light text-white mb-2">
+            <p className="font-serif text-5xl font-light text-white mb-2 group-hover:text-white/90 transition-colors">
               {introductionsCount !== null ? introductionsCount : ""}
             </p>
-            <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
+            <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase group-hover:text-neutral-600 transition-colors">
               This Month
             </p>
-          </div>
+          </button>
         </motion.div>
 
         {/* Profile Management */}
