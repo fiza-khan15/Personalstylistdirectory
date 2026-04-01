@@ -271,12 +271,15 @@ export const StylistProfile = () => {
               Request Introduction
             </button>
           </Inquiries>
-          <button
-            onClick={handleSaveStylist}
-            className="text-[10px] font-medium tracking-[0.3em] text-white/40 uppercase hover:text-white transition-all border-b border-white/5 pb-2"
-          >
-            {isSaving ? "Saving..." : isSaved ? "Saved" : "Save Stylist"}
-          </button>
+          {userId && (
+            <button
+              onClick={handleSaveStylist}
+              disabled={isSaved || isSaving}
+              className="text-[10px] font-medium tracking-[0.3em] text-white/40 uppercase hover:text-white transition-all border-b border-white/5 pb-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "Saving..." : isSaved ? "Saved" : "Save Stylist"}
+            </button>
+          )}
         </div>
       </section>
 
