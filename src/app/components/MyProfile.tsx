@@ -7,10 +7,12 @@ import { useAuth } from "../contexts/AuthContext";
 interface SavedStylist {
   id: string;
   stylist_id: string;
+  profile_id?: string;
   created_at: string;
   // Profile fields from joined data
-  full_name?: string;
-  specialties?: string;
+  name?: string;
+  professional_title?: string;
+  city?: string;
 }
 
 export const MyProfile = () => {
@@ -72,14 +74,15 @@ export const MyProfile = () => {
             savedData.map(async (saved) => {
               const { data: stylistProfile } = await supabase
                 .from("profiles")
-                .select("full_name, specialties")
+                .select("name, professional_title, city")
                 .eq("user_id", saved.stylist_id)
                 .maybeSingle();
 
               return {
                 ...saved,
-                full_name: stylistProfile?.full_name || "",
-                specialties: stylistProfile?.specialties || "",
+                name: stylistProfile?.name || "",
+                professional_title: stylistProfile?.professional_title || "",
+                city: stylistProfile?.city || "",
               };
             })
           );
@@ -261,21 +264,28 @@ export const MyProfile = () => {
                     duration: 0.4,
                     delay: 0.4 + index * 0.05,
                   }}
-                  className={`grid grid-cols-1 md:grid-cols-[2fr_2fr_1fr] gap-6 border-b border-white/10 py-8 ${
+                  className={`grid grid-cols-1 md:grid-cols-[2fr_2fr_2fr_1fr] gap-6 border-b border-white/10 py-8 ${
                     index === 0 ? "border-t" : ""
                   }`}
                 >
                   {/* Stylist Name */}
                   <div>
                     <p className="font-serif text-xl font-light text-white">
-                      {stylist.full_name || ""}
+                      {stylist.name || ""}
                     </p>
                   </div>
 
-                  {/* Specialties */}
+                  {/* Professional Title */}
                   <div>
                     <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
-                      {stylist.specialties || ""}
+                      {stylist.professional_title || ""}
+                    </p>
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                    <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                      {stylist.city || ""}
                     </p>
                   </div>
 

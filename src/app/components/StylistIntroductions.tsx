@@ -12,6 +12,7 @@ interface Introduction {
   message: string;
   status: string;
   created_at: string;
+  client_name?: string; // From profiles table
 }
 
 export const StylistIntroductions = () => {
@@ -40,6 +41,7 @@ export const StylistIntroductions = () => {
           return;
         }
 
+        // Fetch introductions where stylist_id = authenticated user id
         const { data, error } = await supabase
           .from("introductions")
           .select("*")
@@ -51,7 +53,24 @@ export const StylistIntroductions = () => {
           setIntroductions([]);
         } else {
           console.log("Introductions loaded:", data?.length || 0);
-          setIntroductions(data || []);
+          
+          // Fetch client names from profiles table
+          const introductionsWithClientNames = await Promise.all(
+            (data || []).map(async (intro) => {
+              const { data: clientProfile } = await supabase
+                .from("profiles")
+                .select("name")
+                .eq("user_id", intro.client_id)
+                .maybeSingle();
+              
+              return {
+                ...intro,
+                client_name: clientProfile?.name || "",
+              };
+            })
+          );
+          
+          setIntroductions(introductionsWithClientNames);
         }
       } catch (err) {
         console.error("Unexpected introductions fetch error:", err);
@@ -163,7 +182,7 @@ export const StylistIntroductions = () => {
                 {/* Client Name */}
                 <div>
                   <p className="font-serif text-xl font-light text-white group-hover:text-white/80 transition-colors">
-                    {intro.client_id || ""}
+                    {intro.client_name || ""}
                   </p>
                 </div>
 

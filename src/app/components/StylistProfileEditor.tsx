@@ -9,25 +9,30 @@ export const StylistProfileEditor = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [profileData, setProfileData] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     name: "",
+    professionalTitle: "",
+    yearsExperience: "",
     city: "",
     country: "",
     bio: "",
-    specialties: {
-      menswear: false,
-      womenswear: false,
-      luxury: false,
-      personal: false,
-    },
+    specialties: [] as string[],
     instagram: "",
     website: "",
     acceptingClients: false,
+    profileImage: "",
+    portfolioImages: [] as string[],
   });
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const availableSpecialties = [
+    "Menswear",
+    "Womenswear Styling",
+    "Editorial Styling",
+    "Luxury Wardrobe",
+    "Personal Shopping",
+    "Wardrobe Consulting",
+  ];
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -38,6 +43,8 @@ export const StylistProfileEditor = () => {
           return;
         }
 
+        console.log("Fetching profile for userId:", userId);
+
         // Fetch profile data from profiles table
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
@@ -47,25 +54,23 @@ export const StylistProfileEditor = () => {
 
         if (profileError) {
           console.error("Profile fetch error:", profileError);
-          setProfileData(null);
-        } else {
-          setProfileData(profile);
-
+        } else if (profile) {
+          console.log("Profile loaded:", profile);
+          
           // Populate form with existing data
           setFormData({
-            name: profile?.name || "",
-            city: profile?.city || "",
-            country: profile?.country || "",
-            bio: profile?.bio || "",
-            specialties: profile?.specialties || {
-              menswear: false,
-              womenswear: false,
-              luxury: false,
-              personal: false,
-            },
-            instagram: profile?.instagram || "",
-            website: profile?.website || "",
-            acceptingClients: profile?.availability || false,
+            name: profile.name || "",
+            professionalTitle: profile.professional_title || "",
+            yearsExperience: profile.years_experience?.toString() || "",
+            city: profile.city || "",
+            country: profile.country || "",
+            bio: profile.bio || "",
+            specialties: Array.isArray(profile.specialties) ? profile.specialties : [],
+            instagram: profile.instagram || "",
+            website: profile.website || "",
+            acceptingClients: profile.availability || false,
+            profileImage: profile.profile_image || "",
+            portfolioImages: Array.isArray(profile.portfolio_images) ? profile.portfolio_images : [],
           });
         }
       } catch (err) {
@@ -85,10 +90,9 @@ export const StylistProfileEditor = () => {
   const handleSpecialtyToggle = (specialty: string) => {
     setFormData((prev) => ({
       ...prev,
-      specialties: {
-        ...prev.specialties,
-        [specialty]: !prev.specialties[specialty as keyof typeof prev.specialties],
-      },
+      specialties: prev.specialties.includes(specialty)
+        ? prev.specialties.filter((s) => s !== specialty)
+        : [...prev.specialties, specialty],
     }));
   };
 
@@ -101,27 +105,59 @@ export const StylistProfileEditor = () => {
         return;
       }
 
+      console.log("Saving profile for userId:", userId);
+
       // Update profile data in profiles table
-      const { data: updatedProfile, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from("profiles")
         .update({
-          name: formData.name,
-          city: formData.city,
-          country: formData.country,
-          bio: formData.bio,
-          specialties: formData.specialties,
-          instagram: formData.instagram,
-          website: formData.website,
+          name: formData.name || null,
+          professional_title: formData.professionalTitle || null,
+          years_experience: formData.yearsExperience ? parseInt(formData.yearsExperience) : null,
+          city: formData.city || null,
+          country: formData.country || null,
+          bio: formData.bio || null,
+          specialties: formData.specialties.length > 0 ? formData.specialties : null,
+          instagram: formData.instagram || null,
+          website: formData.website || null,
           availability: formData.acceptingClients,
+          profile_image: formData.profileImage || null,
+          portfolio_images: formData.portfolioImages.length > 0 ? formData.portfolioImages : null,
         })
-        .eq("user_id", userId)
-        .maybeSingle();
+        .eq("user_id", userId);
 
       if (updateError) {
         console.error("Profile update error:", updateError);
       } else {
-        setProfileData(updatedProfile);
-        console.log("Saving profile:", formData);
+        console.log("Profile saved successfully");
+        
+        // Reload profile data from database
+        const { data: updatedProfile, error: fetchError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (!fetchError && updatedProfile) {
+          console.log("Profile reloaded:", updatedProfile);
+          
+          // Update form data with reloaded data
+          setFormData({
+            name: updatedProfile.name || "",
+            professionalTitle: updatedProfile.professional_title || "",
+            yearsExperience: updatedProfile.years_experience?.toString() || "",
+            city: updatedProfile.city || "",
+            country: updatedProfile.country || "",
+            bio: updatedProfile.bio || "",
+            specialties: Array.isArray(updatedProfile.specialties) ? updatedProfile.specialties : [],
+            instagram: updatedProfile.instagram || "",
+            website: updatedProfile.website || "",
+            acceptingClients: updatedProfile.availability || false,
+            profileImage: updatedProfile.profile_image || "",
+            portfolioImages: Array.isArray(updatedProfile.portfolio_images) ? updatedProfile.portfolio_images : [],
+          });
+        }
+        
         navigate("/dashboard");
       }
     } catch (err) {
@@ -158,9 +194,9 @@ export const StylistProfileEditor = () => {
         <div className="mb-16">
           <div className="flex items-center gap-6 mb-3">
             <div className="h-24 w-24 border border-white/10 bg-neutral-950 flex items-center justify-center">
-              {profileImage ? (
+              {formData.profileImage ? (
                 <img
-                  src={profileImage}
+                  src={formData.profileImage}
                   alt="Profile"
                   className="h-full w-full object-cover"
                 />
@@ -186,50 +222,82 @@ export const StylistProfileEditor = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
               <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
-                Name/Studio
+                Full Name
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
-                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30"
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
-                Base City
+                Professional Title
+              </label>
+              <input
+                type="text"
+                value={formData.professionalTitle}
+                onChange={(e) => handleInputChange("professionalTitle", e.target.value)}
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
+                City
               </label>
               <input
                 type="text"
                 value={formData.city}
                 onChange={(e) => handleInputChange("city", e.target.value)}
-                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30"
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
+                Country
+              </label>
+              <input
+                type="text"
+                value={formData.country}
+                onChange={(e) => handleInputChange("country", e.target.value)}
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
               />
             </div>
           </div>
 
           <div className="space-y-2">
             <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
-              United States
+              Years of Experience
             </label>
             <input
-              type="text"
-              value={formData.country}
-              onChange={(e) => handleInputChange("country", e.target.value)}
-              className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30"
+              type="number"
+              value={formData.yearsExperience}
+              onChange={(e) => handleInputChange("yearsExperience", e.target.value)}
+              placeholder="Not yet provided"
+              className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
-              Editorial stylist with over a decade of experience crafting fashion, sophisticated looks for discerning clientele.
+              Bio
             </label>
             <textarea
               value={formData.bio}
               onChange={(e) => handleInputChange("bio", e.target.value)}
               rows={4}
-              className="w-full border border-white/10 bg-transparent p-4 text-white text-sm outline-none transition-colors focus:border-white/30 resize-none"
+              placeholder="Not yet provided"
+              className="w-full border border-white/10 bg-transparent p-4 text-white text-sm outline-none transition-colors focus:border-white/30 resize-none placeholder:text-neutral-700"
             />
           </div>
         </div>
@@ -241,28 +309,19 @@ export const StylistProfileEditor = () => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { key: "menswear", label: "Menswear" },
-              { key: "womenswear", label: "Womenswear Styling" },
-              { key: "luxury", label: "Formal Wardrobe" },
-              { key: "personal", label: "Personal Shopping" },
-            ].map((specialty) => (
+            {availableSpecialties.map((specialty) => (
               <label
-                key={specialty.key}
+                key={specialty}
                 className="flex items-center gap-3 border border-white/10 bg-black p-5 cursor-pointer transition-all hover:border-white/20"
               >
                 <input
                   type="checkbox"
-                  checked={
-                    formData.specialties[
-                      specialty.key as keyof typeof formData.specialties
-                    ]
-                  }
-                  onChange={() => handleSpecialtyToggle(specialty.key)}
+                  checked={formData.specialties.includes(specialty)}
+                  onChange={() => handleSpecialtyToggle(specialty)}
                   className="h-4 w-4 cursor-pointer border-white/10 bg-transparent accent-[#4a1a1a]"
                 />
                 <span className="text-[8px] font-medium tracking-[0.3em] text-white uppercase">
-                  {specialty.label}
+                  {specialty}
                 </span>
               </label>
             ))}
@@ -289,25 +348,27 @@ export const StylistProfileEditor = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
               <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
-                @username
+                Instagram
               </label>
               <input
                 type="text"
                 value={formData.instagram}
                 onChange={(e) => handleInputChange("instagram", e.target.value)}
-                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30"
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
-                hello@username.com
+                Website
               </label>
               <input
                 type="text"
                 value={formData.website}
                 onChange={(e) => handleInputChange("website", e.target.value)}
-                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30"
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
               />
             </div>
           </div>
@@ -345,7 +406,7 @@ export const StylistProfileEditor = () => {
             disabled={isSaving}
             className="bg-white text-black px-10 py-4 text-[8px] font-bold tracking-[0.4em] uppercase transition-all duration-300 hover:bg-neutral-200 disabled:opacity-50"
           >
-            {isSaving ? "Saving..." : "Save"}
+            {isSaving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
