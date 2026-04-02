@@ -26,7 +26,7 @@ export const Directory = () => {
           .select("*")
           .eq("user_type", "stylist")
           .eq("availability", true)
-          .eq("profile_status", "Active")
+          .eq("profile_status", "active")
           .order("created_at", { ascending: false });
 
         if (error) {
