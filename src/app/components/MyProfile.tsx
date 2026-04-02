@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { motion } from "motion/react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
@@ -18,10 +18,23 @@ interface SavedStylist {
 export const MyProfile = () => {
   const navigate = useNavigate();
   const { userId, signOut } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
   const [savedStylists, setSavedStylists] = useState<SavedStylist[]>([]);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  useEffect(() => {
+    // Check for success message from query params
+    if (searchParams.get("success") === "request-submitted") {
+      setShowSuccessMessage(true);
+      // Remove the query param
+      setSearchParams({});
+      // Hide message after 5 seconds
+      setTimeout(() => setShowSuccessMessage(false), 5000);
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -145,6 +158,20 @@ export const MyProfile = () => {
 
   return (
     <div className="min-h-screen bg-black">
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="fixed top-32 left-1/2 transform -translate-x-1/2 z-50 bg-[#4a1a1a] border border-[#4a1a1a]/30 px-8 py-4 shadow-2xl"
+        >
+          <p className="text-[10px] tracking-[0.3em] text-[#f2f1e6] uppercase">
+            Request submitted successfully.
+          </p>
+        </motion.div>
+      )}
+
       <div className="mx-auto max-w-6xl px-8 pt-32 pb-24">
         {/* Header */}
         <motion.div

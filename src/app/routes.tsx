@@ -19,6 +19,7 @@ import { ClientProfileEditor } from "./components/ClientProfileEditor";
 import { SignIn } from "./components/SignIn";
 import { Journal } from "./components/Journal";
 import { LandingPage } from "./components/LandingPage";
+import { RequestIntroduction } from "./components/RequestIntroduction";
 
 export const router = createBrowserRouter([
   {
@@ -122,6 +123,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requireStylist>
             <StylistIntroductionDetail />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "request-introduction",
+        element: (
+          <ProtectedRoute>
+            <RequestIntroduction />
           </ProtectedRoute>
         ),
       },

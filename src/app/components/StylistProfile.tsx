@@ -266,11 +266,12 @@ export const StylistProfile = () => {
       {/* Primary Actions */}
       <section className="mx-auto max-w-4xl px-6 md:px-12 py-40 border-t border-white/5">
         <div className="flex flex-col md:flex-row gap-8 items-center justify-center">
-          <Inquiries>
-            <button className="px-16 py-6 border border-white/10 text-[10px] font-bold tracking-[0.5em] text-white uppercase hover:bg-white hover:text-black transition-all">
-              Request Introduction
-            </button>
-          </Inquiries>
+          <button
+            onClick={() => navigate(`/request-introduction?stylist=${profileId}`)}
+            className="px-16 py-6 border border-white/10 text-[10px] font-bold tracking-[0.5em] text-white uppercase hover:bg-white hover:text-black transition-all"
+          >
+            Request Introduction
+          </button>
           {userId && (
             <button
               onClick={handleSaveStylist}
