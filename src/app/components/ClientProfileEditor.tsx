@@ -10,11 +10,15 @@ export const ClientProfileEditor = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [name, setName] = useState("");
-  const [city, setCity] = useState("");
-  const [styleDescription, setStyleDescription] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    city: "",
+    country: "",
+    bio: "",
+    stylePreferences: [] as string[],
+  });
 
-  const availableInterests = [
+  const availablePreferences = [
     "Minimalist",
     "Contemporary",
     "Tailoring",
@@ -29,47 +33,60 @@ export const ClientProfileEditor = () => {
     "Emerging Designers",
   ];
 
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const fetchProfile = async () => {
+    try {
+      if (!userId) {
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Fetching profile for userId:", userId);
+
+      // Fetch profile where user_id = authenticated user id
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (!profileError && profile) {
+        console.log("Profile loaded:", profile);
+        setFormData({
+          name: profile.name || "",
+          city: profile.city || "",
+          country: profile.country || "",
+          bio: profile.bio || "",
+          stylePreferences: Array.isArray(profile.style_preferences) ? profile.style_preferences : [],
+        });
+      } else if (profileError) {
+        console.error("Profile fetch error:", profileError);
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        if (!userId) {
-          setIsLoading(false);
-          return;
-        }
-
-        console.log("Fetching client profile using userId:", userId);
-
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", userId)
-          .maybeSingle();
-
-        if (!profileError && profile) {
-          setName(profile.name || "");
-          setCity(profile.city || "");
-          setStyleDescription(profile.style_preferences || "");
-          setSelectedInterests(profile.style_interests || []);
-        } else if (profileError) {
-          console.error("Profile fetch error:", profileError);
-        }
-      } catch (err) {
-        console.error("Unexpected error:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchProfile();
   }, [userId]);
 
-  const toggleInterest = (interest: string) => {
-    if (selectedInterests.includes(interest)) {
-      setSelectedInterests(selectedInterests.filter((i) => i !== interest));
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const togglePreference = (preference: string) => {
+    if (formData.stylePreferences.includes(preference)) {
+      setFormData((prev) => ({
+        ...prev,
+        stylePreferences: prev.stylePreferences.filter((p) => p !== preference),
+      }));
     } else {
-      setSelectedInterests([...selectedInterests, interest]);
+      setFormData((prev) => ({
+        ...prev,
+        stylePreferences: [...prev.stylePreferences, preference],
+      }));
     }
   };
 
@@ -85,19 +102,26 @@ export const ClientProfileEditor = () => {
 
       console.log("Saving profile for userId:", userId);
 
+      // UPDATE profiles WHERE user_id = authenticated user id
       const { error: profileError } = await supabase
         .from("profiles")
-        .upsert({
-          user_id: userId,
-          name,
-          city,
-          style_preferences: styleDescription,
-          style_interests: selectedInterests,
-        });
+        .update({
+          name: formData.name || null,
+          city: formData.city || null,
+          country: formData.country || null,
+          bio: formData.bio || null,
+          style_preferences: formData.stylePreferences.length > 0 ? formData.stylePreferences : null,
+        })
+        .eq("user_id", userId);
 
       if (profileError) {
         console.error("Profile update error:", profileError);
       } else {
+        console.log("Profile saved successfully");
+        
+        // Reload profile data from profiles table
+        await fetchProfile();
+        
         navigate("/my-profile");
       }
     } catch (err) {
@@ -107,119 +131,142 @@ export const ClientProfileEditor = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center space-y-8">
+          <div className="h-px w-24 mx-auto bg-[#4a1a1a]/20 animate-pulse" />
+          <p className="text-[10px] tracking-[0.3em] text-neutral-500 uppercase animate-pulse">
+            Loading
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen py-32 md:py-40">
-      <div className="mx-auto max-w-3xl px-6 md:px-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-          className="mb-32 space-y-3"
-        >
-          <h1 className="font-serif text-5xl md:text-7xl font-light tracking-tight text-white">
+    <div className="min-h-screen bg-black">
+      <div className="mx-auto max-w-3xl px-8 pt-32 pb-24">
+        {/* Header */}
+        <div className="mb-20 text-center">
+          <h1 className="font-serif text-5xl md:text-6xl font-light text-white">
             Edit Profile
           </h1>
-          <div className="h-px w-12 bg-red-900/40" />
-        </motion.div>
+        </div>
 
+        {/* Basic Information */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.2 }}
-          className="mb-24 space-y-6"
+          transition={{ duration: 0.6 }}
+          className="mb-16 space-y-8"
         >
-          <label className="block space-y-4">
-            <span className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-              Name
-            </span>
+          <h2 className="text-[8px] tracking-[0.4em] text-[#4a1a1a] uppercase">
+            Basic Information
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
+                City
+              </label>
+              <input
+                type="text"
+                value={formData.city}
+                onChange={(e) => handleInputChange("city", e.target.value)}
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
+              Country
+            </label>
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full border-b border-white/10 bg-transparent pb-4 font-serif text-2xl font-light text-white outline-none transition-colors focus:border-white/30"
+              value={formData.country}
+              onChange={(e) => handleInputChange("country", e.target.value)}
+              placeholder="Not yet provided"
+              className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
             />
-          </label>
-        </motion.div>
+          </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.3 }}
-          className="mb-24 space-y-6 border-t border-white/5 pt-20"
-        >
-          <label className="block space-y-4">
-            <span className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-              City
-            </span>
-            <input
-              type="text"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              className="w-full border-b border-white/10 bg-transparent pb-4 font-serif text-2xl font-light text-white outline-none transition-colors focus:border-white/30"
-            />
-          </label>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.4 }}
-          className="mb-24 space-y-6 border-t border-white/5 pt-20"
-        >
-          <label className="block space-y-4">
-            <span className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-              Style Preferences
-            </span>
+          <div className="space-y-2">
+            <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
+              Bio
+            </label>
             <textarea
-              value={styleDescription}
-              onChange={(e) => setStyleDescription(e.target.value)}
-              className="w-full min-h-[180px] resize-none border border-white/5 bg-neutral-900/30 px-8 py-6 font-serif text-lg font-light leading-relaxed text-white outline-none transition-colors focus:border-white/10"
-              placeholder="Describe your style preferences and aesthetic..."
+              value={formData.bio}
+              onChange={(e) => handleInputChange("bio", e.target.value)}
+              rows={4}
+              placeholder="Not yet provided"
+              className="w-full border border-white/10 bg-transparent p-4 text-white text-sm outline-none transition-colors focus:border-white/30 resize-none placeholder:text-neutral-700"
             />
-          </label>
+          </div>
         </motion.div>
 
+        {/* Style Preferences */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.5 }}
-          className="mb-32 space-y-8 border-t border-white/5 pt-20"
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-16 space-y-8 border-t border-white/10 pt-16"
         >
+          <h2 className="text-[8px] tracking-[0.4em] text-[#4a1a1a] uppercase">
+            Style Preferences
+          </h2>
+
           <div className="flex flex-wrap gap-3">
-            {availableInterests.map((interest) => (
+            {availablePreferences.map((preference) => (
               <button
-                key={interest}
-                onClick={() => toggleInterest(interest)}
-                className={`border px-6 py-3 text-[9px] font-medium tracking-[0.3em] uppercase transition-all ${
-                  selectedInterests.includes(interest)
-                    ? "border-white bg-white text-neutral-950"
-                    : "border-white/10 text-neutral-400 hover:border-white/30 hover:text-neutral-300"
+                key={preference}
+                onClick={() => togglePreference(preference)}
+                className={`border px-6 py-3 text-[8px] font-medium tracking-[0.3em] uppercase transition-all ${
+                  formData.stylePreferences.includes(preference)
+                    ? "border-white/30 bg-white/5 text-white"
+                    : "border-white/10 text-neutral-500 hover:border-white/20 hover:text-white"
                 }`}
               >
-                {interest}
+                {preference}
               </button>
             ))}
           </div>
         </motion.div>
 
+        {/* Actions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.6 }}
-          className="space-y-8 border-t border-white/5 pt-16"
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="border-t border-white/10 pt-16 space-y-6"
         >
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+          <div className="flex flex-col md:flex-row gap-4">
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="group border border-white bg-white px-12 py-5 text-[9px] font-bold tracking-[0.4em] text-neutral-950 uppercase transition-all hover:bg-transparent hover:text-white disabled:opacity-50"
+              className="border border-white/10 bg-white px-12 py-4 text-[8px] font-medium tracking-[0.4em] text-black uppercase transition-all hover:bg-white/90 disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </button>
 
             <button
               onClick={() => navigate("/my-profile")}
-              className="text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-colors hover:text-white"
+              className="border border-white/10 px-12 py-4 text-[8px] font-medium tracking-[0.4em] text-neutral-500 uppercase transition-all hover:text-white hover:border-white/20"
             >
               Cancel
             </button>

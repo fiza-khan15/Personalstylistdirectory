@@ -2,13 +2,17 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
 import { Inquiries } from "./Inquiries";
 
 export const StylistProfile = () => {
   const { profileId } = useParams();
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -25,6 +29,18 @@ export const StylistProfile = () => {
           setProfile(null);
         } else {
           setProfile(data);
+          
+          // Check if this stylist is already saved by the current user
+          if (userId && data) {
+            const { data: savedData } = await supabase
+              .from("saved_stylists")
+              .select("id")
+              .eq("client_id", userId)
+              .eq("stylist_id", data.user_id)
+              .maybeSingle();
+            
+            setIsSaved(!!savedData);
+          }
         }
       } catch (err) {
         console.error("Unexpected error:", err);
@@ -36,7 +52,51 @@ export const StylistProfile = () => {
     if (profileId) {
       fetchProfile();
     }
-  }, [profileId]);
+  }, [profileId, userId]);
+
+  const handleSaveStylist = async () => {
+    if (!userId || !profile || isSaved) return;
+
+    setIsSaving(true);
+    try {
+      console.log("Saving stylist:", profile.user_id);
+
+      // Check if already saved (prevent duplicates)
+      const { data: existingData } = await supabase
+        .from("saved_stylists")
+        .select("id")
+        .eq("client_id", userId)
+        .eq("stylist_id", profile.user_id)
+        .maybeSingle();
+
+      if (existingData) {
+        console.log("Stylist already saved");
+        setIsSaved(true);
+        return;
+      }
+
+      // Insert new record
+      const { error } = await supabase
+        .from("saved_stylists")
+        .insert([
+          {
+            client_id: userId,
+            stylist_id: profile.user_id,
+          },
+        ]);
+
+      if (error) {
+        console.error("Failed to save stylist:", error);
+      } else {
+        console.log("Stylist saved successfully");
+        setIsSaved(true);
+      }
+    } catch (err) {
+      console.error("Error saving stylist:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -206,14 +266,21 @@ export const StylistProfile = () => {
       {/* Primary Actions */}
       <section className="mx-auto max-w-4xl px-6 md:px-12 py-40 border-t border-white/5">
         <div className="flex flex-col md:flex-row gap-8 items-center justify-center">
-          <Inquiries>
-            <button className="px-16 py-6 border border-white/10 text-[10px] font-bold tracking-[0.5em] text-white uppercase hover:bg-white hover:text-black transition-all">
-              Request Introduction
-            </button>
-          </Inquiries>
-          <button className="text-[10px] font-medium tracking-[0.3em] text-white/40 uppercase hover:text-white transition-all border-b border-white/5 pb-2">
-            Save Stylist
+          <button
+            onClick={() => navigate(`/request-introduction?stylist=${profileId}`)}
+            className="px-16 py-6 border border-white/10 text-[10px] font-bold tracking-[0.5em] text-white uppercase hover:bg-white hover:text-black transition-all"
+          >
+            Request Introduction
           </button>
+          {userId && (
+            <button
+              onClick={handleSaveStylist}
+              disabled={isSaved || isSaving}
+              className="text-[10px] font-medium tracking-[0.3em] text-white/40 uppercase hover:text-white transition-all border-b border-white/5 pb-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "Saving..." : isSaved ? "Saved" : "Save Stylist"}
+            </button>
+          )}
         </div>
       </section>
 

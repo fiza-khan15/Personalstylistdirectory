@@ -1,21 +1,68 @@
-import React, { useState, useMemo } from "react";
-import { stylists } from "../data/stylists";
+import React, { useState, useMemo, useEffect } from "react";
 import { StylistCard } from "./StylistCard";
 import { motion } from "motion/react";
 import { Inquiries } from "./Inquiries";
+import { supabase } from "@/lib/supabase";
+
+interface StylistProfile {
+  id: string;
+  user_id: string;
+  name: string;
+  city: string;
+  professional_title: string;
+  specialties: string[] | string;
+}
 
 export const Directory = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [stylists, setStylists] = useState<StylistProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStylists = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_type", "stylist")
+          .eq("availability", true)
+          .eq("profile_status", "active")
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Failed to fetch stylists:", error);
+          setStylists([]);
+        } else {
+          console.log("Stylists loaded:", data?.length || 0);
+          setStylists(data || []);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching stylists:", err);
+        setStylists([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStylists();
+  }, []);
 
   const filteredStylists = useMemo(() => {
     if (!searchQuery) return stylists;
     return stylists.filter((s) => {
-      const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           s.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           s.specialties.some(spec => spec.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchesSearch;
+      const matchesName = s.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCity = s.city?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesTitle = s.professional_title?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Handle specialties as array or string
+      const specialtiesArray = Array.isArray(s.specialties) ? s.specialties : [];
+      const matchesSpecialties = specialtiesArray.some(spec => 
+        spec?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      
+      return matchesName || matchesCity || matchesTitle || matchesSpecialties;
     });
-  }, [searchQuery]);
+  }, [searchQuery, stylists]);
 
   return (
     <div className="bg-neutral-950 pt-32 text-white overflow-hidden">
@@ -115,13 +162,15 @@ export const Directory = () => {
         </div>
 
         {/* Stylist Grid */}
-        <div className="grid grid-cols-1 gap-x-8 gap-y-32 sm:grid-cols-2 lg:grid-cols-4">
-          {filteredStylists.map((stylist) => (
-            <StylistCard key={stylist.id} stylist={stylist} />
-          ))}
-        </div>
-        
-        {filteredStylists.length === 0 && (
+        {isLoading ? (
+          <div className="flex h-64 flex-col items-center justify-center space-y-4 text-center">
+            <p className="font-serif text-xl italic text-neutral-600">Loading stylists...</p>
+          </div>
+        ) : filteredStylists.length === 0 && !searchQuery ? (
+          <div className="flex h-64 flex-col items-center justify-center space-y-4 text-center">
+            <p className="font-serif text-xl italic text-neutral-600">No stylists available yet.</p>
+          </div>
+        ) : filteredStylists.length === 0 && searchQuery ? (
           <div className="flex h-64 flex-col items-center justify-center space-y-4 text-center">
             <p className="font-serif text-xl italic text-neutral-600">No results found.</p>
             <button 
@@ -130,6 +179,12 @@ export const Directory = () => {
             >
               Clear search
             </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-x-8 gap-y-32 sm:grid-cols-2 lg:grid-cols-4">
+            {filteredStylists.map((stylist) => (
+              <StylistCard key={stylist.id} stylist={stylist} />
+            ))}
           </div>
         )}
       </section>

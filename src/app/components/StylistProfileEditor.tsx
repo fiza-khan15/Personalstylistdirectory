@@ -1,36 +1,38 @@
 import React, { useState, useEffect } from "react";
-import { Upload, X } from "lucide-react";
+import { Upload } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router";
 
-interface StylistProfileEditorProps {
-  onNavigate: (page: string) => void;
-}
-
-export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) => {
+export const StylistProfileEditor = () => {
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [profileData, setProfileData] = useState<any>(null);
-  
+
   const [formData, setFormData] = useState({
     name: "",
+    professionalTitle: "",
+    yearsExperience: "",
     city: "",
     country: "",
     bio: "",
-    specialties: {
-      menswear: false,
-      editorial: false,
-      luxury: false,
-      branding: false,
-    },
+    specialties: [] as string[],
     instagram: "",
     website: "",
     acceptingClients: false,
+    profileImage: "",
+    portfolioImages: [] as string[],
   });
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [portfolioImages, setPortfolioImages] = useState<string[]>([]);
+  const availableSpecialties = [
+    "Menswear",
+    "Womenswear Styling",
+    "Editorial Styling",
+    "Luxury Wardrobe",
+    "Personal Shopping",
+    "Wardrobe Consulting",
+  ];
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -41,6 +43,8 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
           return;
         }
 
+        console.log("Fetching profile for userId:", userId);
+
         // Fetch profile data from profiles table
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
@@ -50,25 +54,23 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
 
         if (profileError) {
           console.error("Profile fetch error:", profileError);
-          setProfileData(null);
-        } else {
-          setProfileData(profile);
+        } else if (profile) {
+          console.log("Profile loaded:", profile);
           
           // Populate form with existing data
           setFormData({
-            name: profile?.name || "",
-            city: profile?.city || "",
-            country: profile?.country || "",
-            bio: profile?.bio || "",
-            specialties: profile?.specialties || {
-              menswear: false,
-              editorial: false,
-              luxury: false,
-              branding: false,
-            },
-            instagram: profile?.instagram || "",
-            website: profile?.website || "",
-            acceptingClients: profile?.accepting_clients || false,
+            name: profile.name || "",
+            professionalTitle: profile.professional_title || "",
+            yearsExperience: profile.years_experience?.toString() || "",
+            city: profile.city || "",
+            country: profile.country || "",
+            bio: profile.bio || "",
+            specialties: Array.isArray(profile.specialties) ? profile.specialties : [],
+            instagram: profile.instagram || "",
+            website: profile.website || "",
+            acceptingClients: profile.availability || false,
+            profileImage: profile.profile_image || "",
+            portfolioImages: Array.isArray(profile.portfolio_images) ? profile.portfolio_images : [],
           });
         }
       } catch (err) {
@@ -88,10 +90,9 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
   const handleSpecialtyToggle = (specialty: string) => {
     setFormData((prev) => ({
       ...prev,
-      specialties: {
-        ...prev.specialties,
-        [specialty]: !prev.specialties[specialty as keyof typeof prev.specialties],
-      },
+      specialties: prev.specialties.includes(specialty)
+        ? prev.specialties.filter((s) => s !== specialty)
+        : [...prev.specialties, specialty],
     }));
   };
 
@@ -104,28 +105,60 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
         return;
       }
 
+      console.log("Saving profile for userId:", userId);
+
       // Update profile data in profiles table
-      const { data: updatedProfile, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from("profiles")
         .update({
-          name: formData.name,
-          city: formData.city,
-          country: formData.country,
-          bio: formData.bio,
-          specialties: formData.specialties,
-          instagram: formData.instagram,
-          website: formData.website,
-          accepting_clients: formData.acceptingClients,
+          name: formData.name || null,
+          professional_title: formData.professionalTitle || null,
+          years_experience: formData.yearsExperience ? parseInt(formData.yearsExperience) : null,
+          city: formData.city || null,
+          country: formData.country || null,
+          bio: formData.bio || null,
+          specialties: formData.specialties.length > 0 ? formData.specialties : null,
+          instagram: formData.instagram || null,
+          website: formData.website || null,
+          availability: formData.acceptingClients,
+          profile_image: formData.profileImage || null,
+          portfolio_images: formData.portfolioImages.length > 0 ? formData.portfolioImages : null,
         })
-        .eq("user_id", userId)
-        .maybeSingle();
+        .eq("user_id", userId);
 
       if (updateError) {
         console.error("Profile update error:", updateError);
       } else {
-        setProfileData(updatedProfile);
-        console.log("Saving profile:", formData);
-        onNavigate("dashboard");
+        console.log("Profile saved successfully");
+        
+        // Reload profile data from database
+        const { data: updatedProfile, error: fetchError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (!fetchError && updatedProfile) {
+          console.log("Profile reloaded:", updatedProfile);
+          
+          // Update form data with reloaded data
+          setFormData({
+            name: updatedProfile.name || "",
+            professionalTitle: updatedProfile.professional_title || "",
+            yearsExperience: updatedProfile.years_experience?.toString() || "",
+            city: updatedProfile.city || "",
+            country: updatedProfile.country || "",
+            bio: updatedProfile.bio || "",
+            specialties: Array.isArray(updatedProfile.specialties) ? updatedProfile.specialties : [],
+            instagram: updatedProfile.instagram || "",
+            website: updatedProfile.website || "",
+            acceptingClients: updatedProfile.availability || false,
+            profileImage: updatedProfile.profile_image || "",
+            portfolioImages: Array.isArray(updatedProfile.portfolio_images) ? updatedProfile.portfolio_images : [],
+          });
+        }
+        
+        navigate("/dashboard");
       }
     } catch (err) {
       console.error("Unexpected error:", err);
@@ -134,231 +167,246 @@ export const StylistProfileEditor = ({ onNavigate }: StylistProfileEditorProps) 
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center space-y-8">
+          <div className="h-px w-24 mx-auto bg-[#4a1a1a]/20 animate-pulse" />
+          <p className="text-[10px] tracking-[0.3em] text-neutral-500 uppercase animate-pulse">
+            Loading
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen py-32 md:py-40">
-      <div className="mx-auto max-w-4xl px-6 md:px-12">
-        
+    <div className="min-h-screen bg-black">
+      <div className="mx-auto max-w-3xl px-8 pt-32 pb-24">
         {/* Header */}
-        <div className="mb-24 space-y-4 border-b border-white/5 pb-12">
-          <button
-            onClick={() => onNavigate("dashboard")}
-            className="text-[9px] font-medium tracking-[0.4em] text-neutral-600 uppercase transition-colors hover:text-white"
-          >
-            ← Back to Dashboard
-          </button>
-          <h1 className="font-serif text-5xl md:text-7xl font-light tracking-tight text-white">
+        <div className="mb-20 text-center">
+          <h1 className="font-serif text-5xl md:text-6xl font-light text-white">
             Edit Profile
           </h1>
         </div>
 
         {/* Profile Photo */}
-        <div className="mb-20 space-y-6">
-          <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
-            Profile Photo
-          </h2>
-          <div className="flex items-center gap-8">
-            <div className="h-32 w-32 overflow-hidden border border-white/10 bg-neutral-900">
-              {profileImage ? (
-                <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
+        <div className="mb-16">
+          <div className="flex items-center gap-6 mb-3">
+            <div className="h-24 w-24 border border-white/10 bg-neutral-950 flex items-center justify-center">
+              {formData.profileImage ? (
+                <img
+                  src={formData.profileImage}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
               ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <Upload size={24} className="text-neutral-600" />
-                </div>
+                <Upload size={20} className="text-neutral-600" />
               )}
             </div>
-            <button className="border border-white/10 px-8 py-4 text-[9px] font-medium tracking-[0.4em] text-neutral-400 uppercase transition-all hover:border-white hover:text-white">
-              Upload Image
+            <button className="border border-white/10 bg-black px-6 py-3 text-[8px] font-medium tracking-[0.4em] text-neutral-500 uppercase transition-all hover:border-white/20 hover:text-white">
+              Change Image
             </button>
           </div>
+          <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
+            Profile Photo
+          </p>
         </div>
 
         {/* Basic Information */}
-        <div className="mb-20 space-y-8">
-          <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+        <div className="mb-16 space-y-8">
+          <h2 className="text-[8px] tracking-[0.4em] text-[#4a1a1a] uppercase">
             Basic Information
           </h2>
-          
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div className="space-y-3">
-              <label className="text-[9px] font-medium tracking-[0.3em] text-neutral-500 uppercase">
-                Name
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
+                Full Name
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
-                className="w-full border-b border-white/10 bg-transparent py-3 text-white outline-none transition-colors focus:border-red-900"
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
               />
             </div>
 
-            <div className="space-y-3">
-              <label className="text-[9px] font-medium tracking-[0.3em] text-neutral-500 uppercase">
+            <div className="space-y-2">
+              <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
+                Professional Title
+              </label>
+              <input
+                type="text"
+                value={formData.professionalTitle}
+                onChange={(e) => handleInputChange("professionalTitle", e.target.value)}
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
                 City
               </label>
               <input
                 type="text"
                 value={formData.city}
                 onChange={(e) => handleInputChange("city", e.target.value)}
-                className="w-full border-b border-white/10 bg-transparent py-3 text-white outline-none transition-colors focus:border-red-900"
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
               />
             </div>
 
-            <div className="space-y-3 md:col-span-2">
-              <label className="text-[9px] font-medium tracking-[0.3em] text-neutral-500 uppercase">
+            <div className="space-y-2">
+              <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
                 Country
               </label>
               <input
                 type="text"
                 value={formData.country}
                 onChange={(e) => handleInputChange("country", e.target.value)}
-                className="w-full border-b border-white/10 bg-transparent py-3 text-white outline-none transition-colors focus:border-red-900"
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
               />
             </div>
+          </div>
 
-            <div className="space-y-3 md:col-span-2">
-              <label className="text-[9px] font-medium tracking-[0.3em] text-neutral-500 uppercase">
-                Short Bio
-              </label>
-              <textarea
-                value={formData.bio}
-                onChange={(e) => handleInputChange("bio", e.target.value)}
-                rows={4}
-                className="w-full border border-white/10 bg-transparent p-4 text-white outline-none transition-colors focus:border-red-900 resize-none"
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
+              Years of Experience
+            </label>
+            <input
+              type="number"
+              value={formData.yearsExperience}
+              onChange={(e) => handleInputChange("yearsExperience", e.target.value)}
+              placeholder="Not yet provided"
+              className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
+              Bio
+            </label>
+            <textarea
+              value={formData.bio}
+              onChange={(e) => handleInputChange("bio", e.target.value)}
+              rows={4}
+              placeholder="Not yet provided"
+              className="w-full border border-white/10 bg-transparent p-4 text-white text-sm outline-none transition-colors focus:border-white/30 resize-none placeholder:text-neutral-700"
+            />
           </div>
         </div>
 
         {/* Specialties */}
-        <div className="mb-20 space-y-8">
-          <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+        <div className="mb-16 space-y-8">
+          <h2 className="text-[8px] tracking-[0.4em] text-[#4a1a1a] uppercase">
             Specialties
           </h2>
-          
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {[
-              { key: "menswear", label: "Menswear" },
-              { key: "editorial", label: "Editorial Styling" },
-              { key: "luxury", label: "Luxury Wardrobe" },
-              { key: "branding", label: "Personal Branding" },
-            ].map((specialty) => (
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {availableSpecialties.map((specialty) => (
               <label
-                key={specialty.key}
-                className="flex cursor-pointer items-center gap-4 border border-white/5 bg-neutral-900/20 p-6 transition-all hover:border-white/10"
+                key={specialty}
+                className="flex items-center gap-3 border border-white/10 bg-black p-5 cursor-pointer transition-all hover:border-white/20"
               >
                 <input
                   type="checkbox"
-                  checked={formData.specialties[specialty.key as keyof typeof formData.specialties]}
-                  onChange={() => handleSpecialtyToggle(specialty.key)}
-                  className="h-5 w-5 cursor-pointer border-white/10 bg-transparent accent-red-900"
+                  checked={formData.specialties.includes(specialty)}
+                  onChange={() => handleSpecialtyToggle(specialty)}
+                  className="h-4 w-4 cursor-pointer border-white/10 bg-transparent accent-[#4a1a1a]"
                 />
-                <span className="text-[10px] font-medium tracking-[0.3em] text-white uppercase">
-                  {specialty.label}
+                <span className="text-[8px] font-medium tracking-[0.3em] text-white uppercase">
+                  {specialty}
                 </span>
               </label>
             ))}
           </div>
         </div>
 
-        {/* Portfolio Section */}
-        <div className="mb-20 space-y-8">
-          <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+        {/* Portfolio Images */}
+        <div className="mb-16 space-y-8">
+          <h2 className="text-[8px] tracking-[0.4em] text-[#4a1a1a] uppercase">
             Portfolio Images
           </h2>
-          
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {portfolioImages.map((img, index) => (
-              <div key={index} className="group relative aspect-square overflow-hidden border border-white/10">
-                <img src={img} alt={`Portfolio ${index + 1}`} className="h-full w-full object-cover" />
-                <button className="absolute right-2 top-2 bg-neutral-950/80 p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                  <X size={16} className="text-white" />
-                </button>
-              </div>
-            ))}
-            
-            {/* Upload placeholder */}
-            <button className="flex aspect-square items-center justify-center border border-dashed border-white/10 bg-neutral-900/20 transition-all hover:border-white/30">
-              <Upload size={24} className="text-neutral-600" />
-            </button>
-          </div>
-          
-          <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
-            Upload up to 12 portfolio images
-          </p>
+
+          <button className="flex aspect-square w-32 items-center justify-center border border-dashed border-white/10 bg-neutral-950 transition-all hover:border-white/30">
+            <Upload size={24} className="text-neutral-600" />
+          </button>
         </div>
 
         {/* Social Links */}
-        <div className="mb-20 space-y-8">
-          <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+        <div className="mb-16 space-y-8">
+          <h2 className="text-[8px] tracking-[0.4em] text-[#4a1a1a] uppercase">
             Social Links
           </h2>
-          
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div className="space-y-3">
-              <label className="text-[9px] font-medium tracking-[0.3em] text-neutral-500 uppercase">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
                 Instagram
               </label>
               <input
                 type="text"
                 value={formData.instagram}
                 onChange={(e) => handleInputChange("instagram", e.target.value)}
-                placeholder="@username"
-                className="w-full border-b border-white/10 bg-transparent py-3 text-white outline-none transition-colors focus:border-red-900"
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
               />
             </div>
 
-            <div className="space-y-3">
-              <label className="text-[9px] font-medium tracking-[0.3em] text-neutral-500 uppercase">
+            <div className="space-y-2">
+              <label className="text-[8px] tracking-[0.3em] text-neutral-600 uppercase block">
                 Website
               </label>
               <input
                 type="text"
                 value={formData.website}
                 onChange={(e) => handleInputChange("website", e.target.value)}
-                placeholder="www.yourwebsite.com"
-                className="w-full border-b border-white/10 bg-transparent py-3 text-white outline-none transition-colors focus:border-red-900"
+                placeholder="Not yet provided"
+                className="w-full border-b border-white/10 bg-transparent py-2 text-white text-sm outline-none transition-colors focus:border-white/30 placeholder:text-neutral-700"
               />
             </div>
           </div>
         </div>
 
         {/* Availability */}
-        <div className="mb-20 space-y-8">
-          <h2 className="text-[9px] font-bold tracking-[0.5em] text-red-900 uppercase">
+        <div className="mb-16 space-y-8">
+          <h2 className="text-[8px] tracking-[0.4em] text-[#4a1a1a] uppercase">
             Availability
           </h2>
-          
-          <label className="flex cursor-pointer items-center justify-between border border-white/5 bg-neutral-900/20 p-8 transition-all hover:border-white/10">
-            <div className="space-y-2">
-              <p className="text-[10px] font-medium tracking-[0.3em] text-white uppercase">
-                Accepting New Clients
-              </p>
-              <p className="text-[9px] tracking-[0.2em] text-neutral-600 uppercase">
-                Toggle your availability status
-              </p>
+
+          <label className="flex items-center justify-between border border-white/10 bg-black p-6 cursor-pointer transition-all hover:border-white/20">
+            <span className="text-[8px] font-medium tracking-[0.3em] text-white uppercase">
+              Accepting New Clients
+            </span>
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={formData.acceptingClients}
+                onChange={(e) =>
+                  handleInputChange("acceptingClients", e.target.checked)
+                }
+                className="peer sr-only"
+              />
+              <div className="w-11 h-6 bg-neutral-800 rounded-full peer-checked:bg-[#4a1a1a] transition-colors"></div>
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
             </div>
-            <input
-              type="checkbox"
-              checked={formData.acceptingClients}
-              onChange={(e) => handleInputChange("acceptingClients", e.target.checked)}
-              className="h-6 w-12 cursor-pointer appearance-none rounded-full bg-neutral-800 transition-all checked:bg-red-900 relative before:absolute before:left-1 before:top-1 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-all before:checked:translate-x-6 checked:before:translate-x-6"
-            />
           </label>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-6 border-t border-white/5 pt-12">
+        <div className="flex justify-center gap-4">
           <button
             onClick={handleSave}
-            className="border border-white/10 bg-white px-12 py-5 text-[9px] font-bold tracking-[0.5em] text-neutral-950 uppercase transition-all hover:bg-red-900 hover:text-white hover:border-red-900"
+            disabled={isSaving}
+            className="bg-white text-black px-10 py-4 text-[8px] font-bold tracking-[0.4em] uppercase transition-all duration-300 hover:bg-neutral-200 disabled:opacity-50"
           >
-            Save Changes
-          </button>
-          <button
-            onClick={() => onNavigate("dashboard")}
-            className="text-[9px] font-medium tracking-[0.4em] text-neutral-600 uppercase transition-colors hover:text-white"
-          >
-            Cancel
+            {isSaving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>

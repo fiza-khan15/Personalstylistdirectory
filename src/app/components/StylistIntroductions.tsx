@@ -12,6 +12,7 @@ interface Introduction {
   message: string;
   status: string;
   created_at: string;
+  client_name?: string; // From profiles table
 }
 
 export const StylistIntroductions = () => {
@@ -40,6 +41,7 @@ export const StylistIntroductions = () => {
           return;
         }
 
+        // Fetch introductions where stylist_id = authenticated user id
         const { data, error } = await supabase
           .from("introductions")
           .select("*")
@@ -51,7 +53,24 @@ export const StylistIntroductions = () => {
           setIntroductions([]);
         } else {
           console.log("Introductions loaded:", data?.length || 0);
-          setIntroductions(data || []);
+          
+          // Fetch client names from profiles table
+          const introductionsWithClientNames = await Promise.all(
+            (data || []).map(async (intro) => {
+              const { data: clientProfile } = await supabase
+                .from("profiles")
+                .select("name")
+                .eq("user_id", intro.client_id)
+                .maybeSingle();
+              
+              return {
+                ...intro,
+                client_name: clientProfile?.name || "",
+              };
+            })
+          );
+          
+          setIntroductions(introductionsWithClientNames);
         }
       } catch (err) {
         console.error("Unexpected introductions fetch error:", err);
@@ -73,18 +92,18 @@ export const StylistIntroductions = () => {
         day: "numeric",
       });
     } catch {
-      return "Date unavailable";
+      return "";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "pending":
-        return "text-amber-700/80";
+        return "text-amber-600";
       case "active":
-        return "text-emerald-700/80";
+        return "text-emerald-600";
       case "accepted":
-        return "text-emerald-700/80";
+        return "text-emerald-600";
       case "closed":
         return "text-neutral-600";
       case "declined":
@@ -95,17 +114,17 @@ export const StylistIntroductions = () => {
   };
 
   const getStatusLabel = (status: string) => {
-    if (!status) return "Status Unknown";
+    if (!status) return "";
     return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-8">
-          <div className="h-px w-24 mx-auto bg-red-900/20 animate-pulse" />
-          <p className="text-[10px] tracking-[0.3em] text-neutral-700 uppercase animate-pulse">
-            Loading introductions
+          <div className="h-px w-24 mx-auto bg-[#4a1a1a]/20 animate-pulse" />
+          <p className="text-[10px] tracking-[0.3em] text-neutral-500 uppercase animate-pulse">
+            Loading
           </p>
         </div>
       </div>
@@ -113,22 +132,18 @@ export const StylistIntroductions = () => {
   }
 
   return (
-    <div className="min-h-screen py-40 md:py-48">
-      <div className="mx-auto max-w-6xl px-6 md:px-16">
+    <div className="min-h-screen bg-black">
+      <div className="mx-auto max-w-6xl px-8 pt-32 pb-24">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-32 space-y-8"
+          transition={{ duration: 0.6 }}
+          className="mb-20"
         >
-          <h1 className="font-serif text-6xl md:text-8xl font-light tracking-tight text-white">
+          <h1 className="font-serif text-5xl md:text-6xl font-light text-white text-center">
             Introductions
           </h1>
-          <div className="h-px w-16 bg-red-900/30" />
-          <p className="text-[9px] leading-loose tracking-[0.25em] text-neutral-700 uppercase max-w-2xl">
-            Client inquiries facilitated through the Atelistry concierge service
-          </p>
         </motion.div>
 
         {/* Introductions List */}
@@ -136,56 +151,52 @@ export const StylistIntroductions = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="py-32 text-center space-y-8"
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="py-32 text-center"
           >
-            <div className="h-px w-12 mx-auto bg-red-900/20" />
-            <p className="font-serif text-2xl font-light text-neutral-600">
+            <p className="font-serif text-xl font-light text-neutral-600">
               No introductions yet
-            </p>
-            <p className="text-[9px] tracking-[0.2em] text-neutral-800 uppercase">
-              Client inquiries will appear here
             </p>
           </motion.div>
         ) : (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.6, delay: 0.2 }}
             className="space-y-0"
           >
             {introductions.map((intro, index) => (
-              <motion.div
+              <motion.button
                 key={intro.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
-                  duration: 0.8,
-                  delay: 0.4 + index * 0.05,
-                  ease: [0.16, 1, 0.3, 1],
+                  duration: 0.4,
+                  delay: 0.3 + index * 0.05,
                 }}
-                className={`group grid grid-cols-1 gap-8 border-b border-white/[0.03] py-12 transition-all duration-500 hover:bg-white/[0.01] md:grid-cols-5 md:items-center ${
+                onClick={() => navigate(`/stylist-introduction-detail?id=${intro.id}`)}
+                className={`w-full group grid grid-cols-1 md:grid-cols-[2fr_1.5fr_1fr_1fr] gap-6 border-b border-white/10 py-8 transition-all duration-300 hover:bg-white/[0.02] text-left ${
                   index === 0 ? "border-t" : ""
                 }`}
               >
-                <div className="space-y-3 md:col-span-2">
-                  <p className="text-[9px] tracking-[0.3em] text-neutral-700 uppercase">
-                    {formatDate(intro.created_at)}
-                  </p>
-                  <p className="font-serif text-xl font-light text-white">
-                    Introduction Request
-                  </p>
-                </div>
-
+                {/* Client Name */}
                 <div>
-                  <p className="text-[10px] tracking-[0.25em] text-neutral-500 uppercase">
-                    {intro.service_type || "Not specified"}
+                  <p className="font-serif text-xl font-light text-white group-hover:text-white/80 transition-colors">
+                    {intro.client_name || ""}
                   </p>
                 </div>
 
+                {/* Service Type */}
+                <div>
+                  <p className="text-[9px] tracking-[0.3em] text-neutral-600 uppercase">
+                    {intro.service_type || ""}
+                  </p>
+                </div>
+
+                {/* Status */}
                 <div>
                   <span
-                    className={`text-[9px] font-medium tracking-[0.4em] uppercase ${getStatusColor(
+                    className={`text-[8px] font-medium tracking-[0.3em] uppercase ${getStatusColor(
                       intro.status
                     )}`}
                   >
@@ -193,38 +204,16 @@ export const StylistIntroductions = () => {
                   </span>
                 </div>
 
-                <div className="flex justify-start md:justify-end">
-                  <button
-                    onClick={() =>
-                      navigate(`/stylist-introduction-detail?id=${intro.id}`)
-                    }
-                    className="border-b border-white/5 pb-1 text-[9px] font-medium tracking-[0.3em] text-neutral-600 uppercase transition-all duration-300 hover:border-white/30 hover:text-white"
-                  >
-                    View Details
-                  </button>
+                {/* Date */}
+                <div className="text-right">
+                  <p className="text-[9px] tracking-[0.3em] text-neutral-700 uppercase">
+                    {formatDate(intro.created_at)}
+                  </p>
                 </div>
-              </motion.div>
+              </motion.button>
             ))}
           </motion.div>
         )}
-
-        {/* Back Navigation */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.6 }}
-          className="mt-32 border-t border-white/[0.03] pt-16"
-        >
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="group flex items-center gap-3 text-[9px] font-medium tracking-[0.3em] text-neutral-700 uppercase transition-colors duration-300 hover:text-white"
-          >
-            <span className="text-red-900/50 group-hover:text-red-900 transition-colors">
-              ←
-            </span>
-            Return to Dashboard
-          </button>
-        </motion.div>
       </div>
     </div>
   );
