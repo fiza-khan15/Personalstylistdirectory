@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { Upload } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Upload, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router";
+import { projectId, publicAnonKey } from '/utils/supabase/info';
 
 export const StylistProfileEditor = () => {
   const { userId } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingProfile, setUploadingProfile] = useState(false);
+  const [uploadingPortfolio, setUploadingPortfolio] = useState(false);
+  
+  const profileImageInputRef = useRef<HTMLInputElement>(null);
+  const portfolioImagesInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -167,6 +173,156 @@ export const StylistProfileEditor = () => {
     }
   };
 
+  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Invalid file type. Only JPEG, PNG, and WebP are allowed.');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5242880) {
+      alert('File too large. Maximum size is 5MB.');
+      return;
+    }
+
+    setUploadingProfile(true);
+    try {
+      // Get access token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.error('No access token found');
+        alert('Please sign in again to upload images.');
+        return;
+      }
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Upload to server
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-5b46b93c/upload-image`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: formData,
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || result.error) {
+        console.error('Upload error:', result.error);
+        alert(`Upload failed: ${result.error || 'Unknown error'}`);
+        return;
+      }
+
+      if (result.url) {
+        console.log('Profile image uploaded successfully:', result.url);
+        setFormData((prev) => ({ ...prev, profileImage: result.url }));
+      }
+    } catch (err) {
+      console.error('Unexpected error during profile image upload:', err);
+      alert('Upload failed. Please try again.');
+    } finally {
+      setUploadingProfile(false);
+      // Reset input
+      if (profileImageInputRef.current) {
+        profileImageInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handlePortfolioImagesUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingPortfolio(true);
+    try {
+      // Get access token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.error('No access token found');
+        alert('Please sign in again to upload images.');
+        return;
+      }
+
+      const uploadedUrls: string[] = [];
+
+      // Upload each file
+      for (const file of Array.from(files)) {
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          console.warn(`Skipping ${file.name}: Invalid file type`);
+          continue;
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5242880) {
+          console.warn(`Skipping ${file.name}: File too large`);
+          continue;
+        }
+
+        // Create FormData
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Upload to server
+        const response = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-5b46b93c/upload-image`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: formData,
+          }
+        );
+
+        const result = await response.json();
+
+        if (response.ok && result.url) {
+          uploadedUrls.push(result.url);
+        } else {
+          console.error(`Failed to upload ${file.name}:`, result.error);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        console.log(`${uploadedUrls.length} portfolio images uploaded successfully`);
+        setFormData((prev) => ({
+          ...prev,
+          portfolioImages: [...prev.portfolioImages, ...uploadedUrls],
+        }));
+      }
+    } catch (err) {
+      console.error('Unexpected error during portfolio images upload:', err);
+      alert('Upload failed. Please try again.');
+    } finally {
+      setUploadingPortfolio(false);
+      // Reset input
+      if (portfolioImagesInputRef.current) {
+        portfolioImagesInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveProfileImage = () => {
+    setFormData((prev) => ({ ...prev, profileImage: "" }));
+  };
+
+  const handleRemovePortfolioImage = (url: string) => {
+    setFormData((prev) => ({ ...prev, portfolioImages: prev.portfolioImages.filter((img) => img !== url) }));
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -193,19 +349,38 @@ export const StylistProfileEditor = () => {
         {/* Profile Photo */}
         <div className="mb-16">
           <div className="flex items-center gap-6 mb-3">
-            <div className="h-24 w-24 border border-white/10 bg-neutral-950 flex items-center justify-center">
+            <div className="relative h-24 w-24 border border-white/10 bg-neutral-950 flex items-center justify-center group">
               {formData.profileImage ? (
-                <img
-                  src={formData.profileImage}
-                  alt="Profile"
-                  className="h-full w-full object-cover"
-                />
+                <>
+                  <img
+                    src={formData.profileImage}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
+                  <button
+                    onClick={handleRemoveProfileImage}
+                    className="absolute -top-2 -right-2 bg-red-900 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X size={12} />
+                  </button>
+                </>
               ) : (
                 <Upload size={20} className="text-neutral-600" />
               )}
             </div>
-            <button className="border border-white/10 bg-black px-6 py-3 text-[8px] font-medium tracking-[0.4em] text-neutral-500 uppercase transition-all hover:border-white/20 hover:text-white">
-              Change Image
+            <input
+              ref={profileImageInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              onChange={handleProfileImageUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => profileImageInputRef.current?.click()}
+              disabled={uploadingProfile}
+              className="border border-white/10 bg-black px-6 py-3 text-[8px] font-medium tracking-[0.4em] text-neutral-500 uppercase transition-all hover:border-white/20 hover:text-white disabled:opacity-50"
+            >
+              {uploadingProfile ? "Uploading..." : "Change Image"}
             </button>
           </div>
           <p className="text-[8px] tracking-[0.3em] text-neutral-700 uppercase">
@@ -334,9 +509,43 @@ export const StylistProfileEditor = () => {
             Portfolio Images
           </h2>
 
-          <button className="flex aspect-square w-32 items-center justify-center border border-dashed border-white/10 bg-neutral-950 transition-all hover:border-white/30">
-            <Upload size={24} className="text-neutral-600" />
-          </button>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {formData.portfolioImages.map((url, index) => (
+              <div key={index} className="relative aspect-square border border-white/10 bg-neutral-950 group">
+                <img
+                  src={url}
+                  alt={`Portfolio ${index + 1}`}
+                  className="h-full w-full object-cover"
+                />
+                <button
+                  onClick={() => handleRemovePortfolioImage(url)}
+                  className="absolute -top-2 -right-2 bg-red-900 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+            
+            <input
+              ref={portfolioImagesInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              multiple
+              onChange={handlePortfolioImagesUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => portfolioImagesInputRef.current?.click()}
+              disabled={uploadingPortfolio}
+              className="flex aspect-square items-center justify-center border border-dashed border-white/10 bg-neutral-950 transition-all hover:border-white/30 disabled:opacity-50"
+            >
+              {uploadingPortfolio ? (
+                <span className="text-[8px] tracking-[0.3em] text-neutral-500 uppercase">Uploading...</span>
+              ) : (
+                <Upload size={24} className="text-neutral-600" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Social Links */}
