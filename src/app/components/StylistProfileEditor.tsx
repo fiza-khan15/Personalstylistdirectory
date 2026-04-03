@@ -192,13 +192,22 @@ export const StylistProfileEditor = () => {
 
     setUploadingProfile(true);
     try {
-      // Get access token
-      const { data: { session } } = await supabase.auth.getSession();
+      // Get and refresh the session to ensure we have a valid access token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        alert('Session error. Please sign in again.');
+        return;
+      }
+      
       if (!session?.access_token) {
-        console.error('No access token found');
+        console.error('No access token found in session:', session);
         alert('Please sign in again to upload images.');
         return;
       }
+
+      console.log('Uploading with access token (first 20 chars):', session.access_token.substring(0, 20) + '...');
 
       // Create FormData
       const formData = new FormData();
@@ -219,8 +228,8 @@ export const StylistProfileEditor = () => {
       const result = await response.json();
 
       if (!response.ok || result.error) {
-        console.error('Upload error:', result.error);
-        alert(`Upload failed: ${result.error || 'Unknown error'}`);
+        console.error('Upload error - Status:', response.status, 'Error:', result.error);
+        alert(`Upload failed: ${result.error || `Server returned ${response.status}`}`);
         return;
       }
 

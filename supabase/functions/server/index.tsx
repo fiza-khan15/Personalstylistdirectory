@@ -71,16 +71,28 @@ app.post("/make-server-5b46b93c/upload-image", async (c) => {
     const authHeader = c.req.header('Authorization');
     const accessToken = authHeader?.split(' ')[1];
     
+    console.log('Upload request received. Auth header present:', !!authHeader);
+    console.log('Access token present:', !!accessToken);
+    
     if (!accessToken) {
+      console.error('Upload failed: No access token in Authorization header');
       return c.json({ error: 'Unauthorized - No access token provided' }, 401);
     }
 
     // Verify user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
     
-    if (authError || !user?.id) {
+    if (authError) {
+      console.error('Auth verification error:', authError);
+      return c.json({ error: `Unauthorized - ${authError.message}` }, 401);
+    }
+    
+    if (!user?.id) {
+      console.error('Auth verification failed: No user ID found');
       return c.json({ error: 'Unauthorized - Invalid access token' }, 401);
     }
+    
+    console.log('User authenticated successfully:', user.id);
 
     // Get the uploaded file
     const body = await c.req.parseBody();
