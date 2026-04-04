@@ -3,7 +3,6 @@ import { Upload, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router";
-import { projectId } from '/utils/supabase/info';
 
 export const StylistProfileEditor = () => {
   const { userId } = useAuth();
@@ -192,51 +191,46 @@ export const StylistProfileEditor = () => {
 
     setUploadingProfile(true);
     try {
-      // Get and refresh the session to ensure we have a valid access token
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        alert('Session error. Please sign in again.');
-        return;
-      }
-      
-      if (!session?.access_token) {
-        console.error('No access token found in session:', session);
+      if (!userId) {
+        console.error('No user ID found');
         alert('Please sign in again to upload images.');
         return;
       }
 
-      console.log('Uploading with access token (first 20 chars):', session.access_token.substring(0, 20) + '...');
+      // Generate file path: {user_id}.jpg
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const filePath = `${userId}.${fileExt}`;
 
-      // Create FormData
-      const formData = new FormData();
-      formData.append('file', file);
+      console.log('Uploading profile image to:', filePath);
 
-      // Upload to server
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-5b46b93c/upload-image`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: formData,
-        }
-      );
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('profile-images')
+        .upload(filePath, file, {
+          contentType: file.type,
+          upsert: true, // Overwrite if exists
+        });
 
-      const result = await response.json();
-
-      if (!response.ok || result.error) {
-        console.error('Upload error - Status:', response.status, 'Error:', result.error);
-        alert(`Upload failed: ${result.error || `Server returned ${response.status}`}`);
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        alert(`Upload failed: ${uploadError.message}`);
         return;
       }
 
-      if (result.url) {
-        console.log('Profile image uploaded successfully:', result.url);
-        setFormData((prev) => ({ ...prev, profileImage: result.url }));
+      // Get public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(filePath);
+
+      if (!publicUrlData?.publicUrl) {
+        console.error('Failed to get public URL');
+        alert('Upload succeeded but failed to get image URL');
+        return;
       }
+
+      console.log('Profile image uploaded successfully:', publicUrlData.publicUrl);
+      setFormData((prev) => ({ ...prev, profileImage: publicUrlData.publicUrl }));
+      
     } catch (err) {
       console.error('Unexpected error during profile image upload:', err);
       alert('Upload failed. Please try again.');
@@ -255,10 +249,8 @@ export const StylistProfileEditor = () => {
 
     setUploadingPortfolio(true);
     try {
-      // Get access token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        console.error('No access token found');
+      if (!userId) {
+        console.error('No user ID found');
         alert('Please sign in again to upload images.');
         return;
       }
@@ -280,28 +272,32 @@ export const StylistProfileEditor = () => {
           continue;
         }
 
-        // Create FormData
-        const formData = new FormData();
-        formData.append('file', file);
+        // Generate unique file path for portfolio: {user_id}/{timestamp}-{uuid}.ext
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const filePath = `${userId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
 
-        // Upload to server
-        const response = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-5b46b93c/upload-image`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-            },
-            body: formData,
-          }
-        );
+        console.log('Uploading portfolio image to:', filePath);
 
-        const result = await response.json();
+        // Upload to Supabase Storage
+        const { error: uploadError } = await supabase.storage
+          .from('profile-images')
+          .upload(filePath, file, {
+            contentType: file.type,
+            upsert: false,
+          });
 
-        if (response.ok && result.url) {
-          uploadedUrls.push(result.url);
-        } else {
-          console.error(`Failed to upload ${file.name}:`, result.error);
+        if (uploadError) {
+          console.error(`Failed to upload ${file.name}:`, uploadError);
+          continue;
+        }
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from('profile-images')
+          .getPublicUrl(filePath);
+
+        if (publicUrlData?.publicUrl) {
+          uploadedUrls.push(publicUrlData.publicUrl);
         }
       }
 
