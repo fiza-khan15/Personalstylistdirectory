@@ -22,12 +22,12 @@ export const Directory = () => {
     const fetchStylists = async () => {
       try {
         const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_type", "stylist")
-          .eq("availability", true)
-          .eq("profile_status", "active")
-          .order("created_at", { ascending: false });
+          .from('profiles')
+          .select('*')
+          .eq('user_type', 'stylist')
+          .eq('availability', true)
+          .eq('profile_status', 'Active')
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error("Failed to fetch stylists:", error);
