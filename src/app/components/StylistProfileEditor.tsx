@@ -179,7 +179,7 @@ export const StylistProfileEditor = () => {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Invalid file type. Only JPEG, PNG, and WebP are allowed.');
+      alert('Invalid file type. Please upload a JPEG, PNG, or WebP image.');
       return;
     }
 
@@ -201,7 +201,11 @@ export const StylistProfileEditor = () => {
       const fileExt = file.name.split('.').pop() || 'jpg';
       const filePath = `${userId}.${fileExt}`;
 
-      console.log('Uploading profile image to:', filePath);
+      console.log('🔵 Starting profile image upload...');
+      console.log('🔵 User ID:', userId);
+      console.log('🔵 File path:', filePath);
+      console.log('🔵 File size:', file.size, 'bytes');
+      console.log('🔵 File type:', file.type);
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -212,10 +216,12 @@ export const StylistProfileEditor = () => {
         });
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
+        console.error('❌ Upload error:', uploadError);
         alert(`Upload failed: ${uploadError.message}`);
         return;
       }
+
+      console.log('✅ Upload successful!');
 
       // Get public URL
       const { data: publicUrlData } = supabase.storage
@@ -223,16 +229,19 @@ export const StylistProfileEditor = () => {
         .getPublicUrl(filePath);
 
       if (!publicUrlData?.publicUrl) {
-        console.error('Failed to get public URL');
+        console.error('❌ Failed to get public URL');
         alert('Upload succeeded but failed to get image URL');
         return;
       }
 
-      console.log('Profile image uploaded successfully:', publicUrlData.publicUrl);
+      console.log('✅ Public URL generated:', publicUrlData.publicUrl);
+      console.log('⚠️ Remember to click "SAVE PROFILE" to persist this image!');
+      
       setFormData((prev) => ({ ...prev, profileImage: publicUrlData.publicUrl }));
+      alert('Image uploaded! Click "SAVE PROFILE" to save changes.');
       
     } catch (err) {
-      console.error('Unexpected error during profile image upload:', err);
+      console.error('❌ Unexpected error during profile image upload:', err);
       alert('Upload failed. Please try again.');
     } finally {
       setUploadingProfile(false);

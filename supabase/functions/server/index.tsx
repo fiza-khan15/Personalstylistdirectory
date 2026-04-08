@@ -12,15 +12,35 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
 );
 
-// Storage bucket name
+// Storage bucket names
 const BUCKET_NAME = 'make-5b46b93c-stylist-images';
+const PROFILE_IMAGES_BUCKET = 'profile-images';
 
-// Initialize storage bucket on startup
+// Initialize storage buckets on startup
 const initStorage = async () => {
   try {
     const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketExists = buckets?.some(bucket => bucket.name === BUCKET_NAME);
     
+    // Create profile-images bucket (public)
+    const profileBucketExists = buckets?.some(bucket => bucket.name === PROFILE_IMAGES_BUCKET);
+    if (!profileBucketExists) {
+      console.log(`Creating storage bucket: ${PROFILE_IMAGES_BUCKET}`);
+      const { error } = await supabase.storage.createBucket(PROFILE_IMAGES_BUCKET, {
+        public: true,  // Public bucket for profile images
+        fileSizeLimit: 5242880, // 5MB limit
+      });
+      
+      if (error) {
+        console.error('Failed to create profile-images bucket:', error);
+      } else {
+        console.log('Profile-images bucket created successfully');
+      }
+    } else {
+      console.log('Profile-images bucket already exists');
+    }
+    
+    // Create stylist-images bucket (private) - for future use
+    const bucketExists = buckets?.some(bucket => bucket.name === BUCKET_NAME);
     if (!bucketExists) {
       console.log(`Creating storage bucket: ${BUCKET_NAME}`);
       const { error } = await supabase.storage.createBucket(BUCKET_NAME, {
@@ -29,12 +49,12 @@ const initStorage = async () => {
       });
       
       if (error) {
-        console.error('Failed to create storage bucket:', error);
+        console.error('Failed to create stylist-images bucket:', error);
       } else {
-        console.log('Storage bucket created successfully');
+        console.log('Stylist-images bucket created successfully');
       }
     } else {
-      console.log('Storage bucket already exists');
+      console.log('Stylist-images bucket already exists');
     }
   } catch (err) {
     console.error('Error initializing storage:', err);
