@@ -197,21 +197,36 @@ export const StylistProfileEditor = () => {
         return;
       }
 
-      // Generate file path: {user_id}.jpg
-      const fileExt = file.name.split('.').pop() || 'jpg';
-      const filePath = `${userId}.${fileExt}`;
-
       console.log('🔵 Starting profile image upload...');
       console.log('🔵 User ID:', userId);
-      console.log('🔵 File path:', filePath);
-      console.log('🔵 File size:', file.size, 'bytes');
-      console.log('🔵 File type:', file.type);
+      console.log('🔵 Original file:', file.name, file.type, file.size, 'bytes');
+
+      // ALWAYS use .jpg extension for consistency (avoids multiple files with different extensions)
+      const filePath = `${userId}.jpg`;
+      
+      console.log('🔵 Target file path:', filePath);
+
+      // Delete old profile images first (all possible extensions)
+      const extensionsToDelete = ['jpg', 'jpeg', 'png', 'webp'];
+      for (const ext of extensionsToDelete) {
+        const oldPath = `${userId}.${ext}`;
+        console.log('🧹 Attempting to delete old file:', oldPath);
+        const { error: deleteError } = await supabase.storage
+          .from('profile-images')
+          .remove([oldPath]);
+        
+        if (deleteError && !deleteError.message.includes('not found')) {
+          console.warn('⚠️ Could not delete old file:', oldPath, deleteError);
+        } else {
+          console.log('✅ Cleaned up old file (if it existed):', oldPath);
+        }
+      }
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('profile-images')
         .upload(filePath, file, {
-          contentType: file.type,
+          contentType: 'image/jpeg', // Always use JPEG content type
           upsert: true, // Overwrite if exists
         });
 
@@ -223,7 +238,8 @@ export const StylistProfileEditor = () => {
 
       console.log('✅ Upload successful!');
 
-      // Get public URL
+      // Get public URL with cache-busting parameter
+      const timestamp = Date.now();
       const { data: publicUrlData } = supabase.storage
         .from('profile-images')
         .getPublicUrl(filePath);
@@ -234,11 +250,14 @@ export const StylistProfileEditor = () => {
         return;
       }
 
-      console.log('✅ Public URL generated:', publicUrlData.publicUrl);
-      console.log('⚠️ Remember to click "SAVE PROFILE" to persist this image!');
+      // Add cache-busting timestamp to force browser to fetch new image
+      const urlWithCacheBust = `${publicUrlData.publicUrl}?v=${timestamp}`;
+
+      console.log('✅ Public URL generated:', urlWithCacheBust);
+      console.log('⚠️ Remember to click "SAVE CHANGES" to persist this image!');
       
-      setFormData((prev) => ({ ...prev, profileImage: publicUrlData.publicUrl }));
-      alert('Image uploaded! Click "SAVE PROFILE" to save changes.');
+      setFormData((prev) => ({ ...prev, profileImage: urlWithCacheBust }));
+      alert('Image uploaded! Click "SAVE CHANGES" to save changes.');
       
     } catch (err) {
       console.error('❌ Unexpected error during profile image upload:', err);
