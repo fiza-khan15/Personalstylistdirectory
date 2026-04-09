@@ -11,6 +11,7 @@ interface StylistProfile {
   city: string;
   professional_title: string;
   specialties: string[] | string;
+  profile_image?: string;
 }
 
 export const Directory = () => {

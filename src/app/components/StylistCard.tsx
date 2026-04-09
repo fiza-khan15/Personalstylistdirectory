@@ -9,7 +9,7 @@ interface StylistCardProps {
     city: string;
     professional_title: string;
     specialties: string[] | string;
-    imageUrl?: string;
+    profile_image?: string;
   };
 }
 
@@ -25,11 +25,11 @@ export const StylistCard = ({ stylist }: StylistCardProps) => {
       className="group block space-y-8 cursor-pointer"
     >
       <div className="aspect-[3/4] overflow-hidden bg-neutral-900">
-        {stylist.imageUrl && (
+        {stylist.profile_image && (
           <img
-            src={stylist.imageUrl}
+            src={stylist.profile_image}
             alt={stylist.name || ""}
-            className="h-full w-full object-cover grayscale transition-transform duration-[3s] group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         )}
       </div>
