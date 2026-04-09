@@ -161,7 +161,7 @@ export const StylistProfile = () => {
             className="aspect-[4/5] bg-neutral-900 overflow-hidden grayscale"
           >
             <img
-              src={profile.imageUrl}
+              src={profile.profile_image}
               alt={profile.name}
               className="h-full w-full object-cover"
             />
